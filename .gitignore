@@ -57,3 +57,4 @@ build-iPhoneSimulator/
 /.env.development
 /.env.test
 /db/*.sql
+/log/

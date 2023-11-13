@@ -39,7 +39,11 @@ gem 'bootsnap', require: false
 # A gem providing "time travel" and "time freezing" capabilities
 gem 'timecop'
 
-gem 'puma'
+gem 'capistrano'
+gem 'capistrano-passenger'
+gem 'capistrano-rbenv'
+gem 'ed25519'
+gem 'bcrypt_pbkdf'
 
 group :development, :test do
   # A library for setting up Ruby objects as test data.

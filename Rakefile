@@ -54,6 +54,14 @@ namespace :db do
   end
 end
 
+namespace :data do
+  desc 'Run data import job'
+  task :import do
+    # Qui inserisci la logica per avviare il job di importazione
+    RufusScheduler.first_import
+  end
+end
+
 # Shell
 
 irb = proc do |env|

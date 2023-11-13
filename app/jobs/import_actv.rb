@@ -9,7 +9,7 @@ module Jobs
     def self.perform
       puts "Esecuzione di ImportJob: #{Time.now}"
       
-      gtfs_url = "/home/jojo/Downloads/actv_aut.zip"
+      gtfs_url = "https://actv.avmspa.it/sites/default/files/attachments/opendata/automobilistico/actv_aut.zip"
       gtfs_source = GTFS::Source.build(gtfs_url)
 
       puts "BEGIN TO SLICE: #{Time.now}"

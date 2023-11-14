@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'roda'
+require 'newrelic_rpm'
 require_relative './system/boot'
 
 # The App class is the main entry point for the Roda application. It includes

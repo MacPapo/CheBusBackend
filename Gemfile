@@ -29,6 +29,8 @@ gem 'oj'
 # A powerful logger for Roda with a few triks up it's sleeve.
 gem 'roda-enhanced_logger'
 
+gem 'newrelic_rpm'
+
 # Organize your code into reusable components.
 gem 'dry-system'
 

@@ -17,6 +17,9 @@ Application.register_provider(:database) do
     # in subprocesses. Then establishes a connection to the database using Sequel.
     database = Sequel.connect(ENV.delete('DATABASE_URL'))
 
+    # Add new-relic logs
+    database.extension :newrelic_instrumentation
+
     # Adds the pg_auto_parameterize extension for PostgreSQL databases to optimize
     # query parameter handling. Checks for PostgreSQL adapter and compatibility.
     database.extension :pg_auto_parameterize if database.adapter_scheme == :postgres && Sequel::Postgres::USES_PG

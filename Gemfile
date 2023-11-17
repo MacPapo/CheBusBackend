@@ -43,6 +43,8 @@ gem 'timecop'
 
 gem 'gtfs'
 
+gem 'puma'
+
 group :development, :test do
   # A library for setting up Ruby objects as test data.
   gem 'factory_bot'

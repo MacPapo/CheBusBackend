@@ -58,3 +58,4 @@ build-iPhoneSimulator/
 /.env.test
 /db/*.sql
 *.log
+/.env.production

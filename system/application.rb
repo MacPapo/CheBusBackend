@@ -31,7 +31,6 @@ end
 # These are essential components for the application's runtime environment.
 Application.start(:environment_variables)
 Application.start(:oj)
-Application.start(:logger)
 Application.start(:database)
 Application.start(:models)
 Application.start(:validation)

@@ -5,7 +5,7 @@ source 'https://rubygems.org'
 ruby '3.2.2'
 
 # Routing Tree Web Toolkit.
-gem 'roda', '>= 3.41'
+gem 'roda'
 
 # A make-like build utility for Ruby
 gem 'rake'
@@ -36,8 +36,6 @@ gem 'dry-system'
 
 gem 'dry-validation'
 
-gem 'bootsnap', require: false
-
 # A gem providing "time travel" and "time freezing" capabilities
 gem 'timecop'
 
@@ -46,9 +44,6 @@ gem 'gtfs'
 gem 'puma'
 
 group :development, :test do
-  # A library for setting up Ruby objects as test data.
-  gem 'factory_bot'
-
   # A Ruby gem to load environment variables from '.env'.
   gem 'dotenv'
 

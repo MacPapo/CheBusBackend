@@ -51,6 +51,9 @@ namespace :data do
     # Qui inserisci la logica per avviare il job di importazione
     RufusScheduler.first_import
   end
+  task :pgrouting do
+    RufusScheduler.pgrouting_import
+  end
 end
 
 # Shell

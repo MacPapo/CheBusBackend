@@ -7,6 +7,11 @@ module RufusScheduler
     Jobs::ImportActvGeo.perform
   end
 
+  def self.pgrouting_import
+    puts "== PGROUTING JOB STARTED =="
+    Jobs::ImportPgrouting.perform
+  end
+
   # require 'rufus-scheduler'
   # scheduler = Rufus::Scheduler.new
 

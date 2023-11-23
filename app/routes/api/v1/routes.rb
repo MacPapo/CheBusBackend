@@ -17,7 +17,7 @@ module Routes::API::V1::Routes
       # @param interval [String] The time interval in minutes.
       r.get(params!: ROUTE_PARAMS) do |from, to, datetime, interval|
         validation_result = Routes::API::V1::Routes.validate_params(from, to, datetime, interval)
-        
+
         if validation_result.success?
           result = Routes::API::V1::Routes.handle_routes_request(from, to, datetime, interval)
           result ? APIResponse.success(response, result) : APIResponse.error(response, 'No routes found', 404)
@@ -39,7 +39,7 @@ module Routes::API::V1::Routes
     contract = Validations::RoutesValidation::RouteContract.new
     contract.call(from_stop_name:, to_stop_name:, datetime:, interval:)
   end
-  
+
   # Handles the request for route information.
   # Fetches the route data based on the validated parameters.
   # @param from_stop_name [String] The name of the departure stop.
@@ -52,7 +52,7 @@ module Routes::API::V1::Routes
     from_stop_ids, to_stop_ids = Routes::API::V1::Routes.fetch_stop_ids(from_stop_name, to_stop_name)
 
     departures = Routes::API::V1::Routes.fetch_departures(from_stop_ids, from_datetime, to_datetime)
-    arrivals   = Routes::API::V1::Routes.fetch_arrivals(to_stop_ids, from_datetime, to_datetime)
+    arrivals   = Routes::API::V1::Routes.fetch_arrivals(to_stop_ids, to_datetime)
 
     Routes::API::V1::Routes.join_and_sort_departures_and_arrivals(departures, arrivals)
   end
@@ -84,7 +84,6 @@ module Routes::API::V1::Routes
     Application['database'][:connections]
       .select(:trip_id, :t_departure, :from_stop_name, :route_short_name)
       .where(from_stop_id: from_stop_ids, t_departure: from_datetime..to_datetime)
-      .from_self(alias: :departures)
   end
 
   # Fetches arrival information based on given stop IDs and datetime range.
@@ -92,11 +91,10 @@ module Routes::API::V1::Routes
   # @param from_datetime [DateTime] The starting datetime.
   # @param to_datetime [DateTime] The ending datetime.
   # @return [Sequel::Dataset] Dataset containing arrival information.
-  def self.fetch_arrivals(to_stop_ids, from_datetime, to_datetime)
+  def self.fetch_arrivals(to_stop_ids, to_datetime)
     Application['database'][:connections]
       .select(:trip_id, :t_arrival, :to_stop_name)
-      .where(to_stop_id: to_stop_ids, t_arrival: from_datetime..to_datetime)
-      .from_self(alias: :arrivals)
+      .where(to_stop_id: to_stop_ids, t_arrival: ..(to_datetime + 1))
   end
 
   # Joins and sorts the departures and arrivals datasets.

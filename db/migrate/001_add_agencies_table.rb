@@ -17,7 +17,7 @@ EXCEPTION WHEN invalid_parameter_value THEN
 END;
 $$ LANGUAGE plpgsql STABLE;
 SQL
-    
+
     create_table :agencies do
       String   :agency_id,       primary_key: true
       String   :agency_name,     null: false

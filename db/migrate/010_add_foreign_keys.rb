@@ -99,6 +99,38 @@ Sequel.migration do
       CREATE INDEX ON service_days (service_id, date);
     SQL
 
+    run <<~SQL
+CREATE MATERIALIZED VIEW bus_schedule AS
+SELECT 
+    r.route_id,
+    r.route_long_name,
+    s.stop_id,
+    s.stop_name,
+    sd.service_id as service_date,
+    (sd.date + st.arrival_time) as arrival_timestamp,
+    (sd.date + st.departure_time) as departure_timestamp
+FROM
+    routes r
+JOIN
+    trips t ON r.route_id = t.route_id
+JOIN
+    stop_times st ON t.trip_id = st.trip_id
+JOIN
+    stops s ON st.stop_id = s.stop_id
+JOIN
+    service_days sd ON t.service_id = sd.service_id
+ORDER BY
+    r.route_id, s.stop_id, st.arrival_time, sd.date;
+
+CREATE INDEX idx_bus_schedule_route ON bus_schedule(route_id);
+CREATE INDEX idx_bus_schedule_stop ON bus_schedule(stop_id);
+CREATE INDEX idx_bus_schedule_arrival ON bus_schedule(arrival_timestamp);
+CREATE INDEX idx_bus_schedule_departure ON bus_schedule(departure_timestamp);
+CREATE INDEX idx_bus_schedule_service_date ON bus_schedule(service_date);
+SQL
+
+    # --------------------
+
     # FUNCTION LARGEST_DEPARTURE_TIME
     run <<~SQL
       CREATE OR REPLACE FUNCTION largest_departure_time ()

@@ -10,6 +10,9 @@ gem 'roda'
 # A make-like build utility for Ruby
 gem 'rake'
 
+# Redis: Key-Value Database
+gem 'redis'
+
 # Sequel: The Database Toolkit
 gem 'sequel', '>= 5.41'
 
@@ -49,6 +52,8 @@ group :development, :test do
 
   # A Ruby static code analyzer and formatter, based on the comunity Ruby stype guide.
   gem 'rubocop'
+
+  gem 'solargraph'
 
   # An extension of RuboCop focused on code performance checks.
   gem 'rubocop-performance'

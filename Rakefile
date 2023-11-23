@@ -4,15 +4,6 @@
 
 require_relative './system/application'
 
-# Enable database component.
-Application.start(:database)
-
-# Enable logger component.
-Application.start(:logger)
-
-# Add existing Logger instance to DB.loggers collection.
-Application['database'].loggers << Application['logger']
-
 migrate =
   lambda do |version|
     # Enable Sequel migration extension.

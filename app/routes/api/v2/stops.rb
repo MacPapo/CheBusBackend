@@ -27,15 +27,19 @@ module Routes::API::V2::Stops
   end
 
   # Handles requests for all bus stops.
-  # @param _r [Roda::RodaRequest] The Roda request object.
+  # @param r [Roda::RodaRequest] The Roda request object.
   # @return [String] Serialized JSON response containing all stops.
-  def self.handle_all_stops_request(_r)
-    query = Application['database'][:stops]
-      .select(:stop_name)
-      .distinct
-      .to_a
+  def self.handle_all_stops_request(r)
+    res = Oj.load(Application['redis'].get('stops'))
+    if res.nil?
+      puts 'SONO DENTRO'
+      query = Application['database'][:stops].select(:stop_name).distinct.to_a
 
-    APIResponse.success(_r.response, Serializers::StopSerializer.new(query, view: :stop_only_name).to_json)
+      res = Serializers::StopSerializer.new(query, view: :stop_only_name).to_json
+      Application['redis'].set('stops', Oj.dump(res))
+    end
+
+    APIResponse.success(r.response, res)
   end
 
   # Handles requests for a specific bus stop by its ID.

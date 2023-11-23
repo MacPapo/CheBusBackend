@@ -17,7 +17,7 @@ gem 'redis'
 gem 'sequel', '>= 5.41'
 
 # Faster SELECTs when using Sequel with pg
-gem 'sequel_pg', '>= 1.14'
+gem 'sequel_pg', require: 'sequel'
 
 # A runtime developer console
 gem 'pry'
@@ -42,7 +42,8 @@ gem 'dry-validation'
 # A gem providing "time travel" and "time freezing" capabilities
 gem 'timecop'
 
-gem 'gtfs'
+gem 'down'
+gem 'open4'
 
 gem 'puma'
 

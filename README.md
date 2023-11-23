@@ -19,11 +19,13 @@ psql -U postgres -d roda_production -c "CREATE EXTENSION IF NOT EXISTS postgis;"
 psql -U postgres -d roda_test -c "CREATE EXTENSION IF NOT EXISTS postgis;"
 psql -U postgres -d roda_development -c "CREATE EXTENSION IF NOT EXISTS postgis;"
 
+enable pgrouting extension:
+psql -U postgres -d roda_production -c "CREATE EXTENSION IF NOT EXISTS pgrouting;"
+psql -U postgres -d roda_test -c "CREATE EXTENSION IF NOT EXISTS pgrouting;"
+psql -U postgres -d roda_development -c "CREATE EXTENSION IF NOT EXISTS pgrouting;"
+
 # Set the environment variables
 Create the .env.development from .env.development.template
-
-# Start the rake's tasks
-rake db:migrate
 
 rake data:import
 

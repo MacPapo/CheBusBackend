@@ -30,13 +30,13 @@ module Routes::API::V2::Stops
   # @param r [Roda::RodaRequest] The Roda request object.
   # @return [String] Serialized JSON response containing all stops.
   def self.handle_all_stops_request(r)
-    res = Oj.load(Application['redis'].get('stops'))
+    res = Helpers::RedisHelper.get_key_from_redis('stops')
+
     if res.nil?
-      puts 'SONO DENTRO'
       query = Application['database'][:stops].select(:stop_name).distinct.to_a
 
       res = Serializers::StopSerializer.new(query, view: :stop_only_name).to_json
-      Application['redis'].set('stops', Oj.dump(res))
+      Helpers::RedisHelper.set_key_in_redis('stops', res)
     end
 
     APIResponse.success(r.response, res)

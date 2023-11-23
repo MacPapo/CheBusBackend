@@ -4,7 +4,7 @@ module RufusScheduler
 
   def self.first_import
     puts "== IMPORT JOB STARTED =="
-    Jobs::ImportActv.perform
+    Jobs::ImportActvGeo.perform
   end
 
   # require 'rufus-scheduler'

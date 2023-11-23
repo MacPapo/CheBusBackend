@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'gtfs'
+# require 'gtfs'
 
 module Jobs
   class ImportActv

@@ -15,7 +15,14 @@ Application.register_provider(:database) do
   start do
     # Removes DATABASE_URL from the environment to prevent its accidental use
     # in subprocesses. Then establishes a connection to the database using Sequel.
-    database = Sequel.connect(ENV.delete('DATABASE_URL'))
+    database =
+      Sequel.connect(
+        adapter: 'postgres',
+        database: ENV.fetch('DATABASE_NAME'),
+        host: ENV.fetch('DATABASE_HOST'),
+        user: ENV.fetch('DATABASE_USER'),
+        password: ENV.fetch('DATABASE_PASSWORD')
+      )
 
     # Adds the pg_auto_parameterize extension for PostgreSQL databases to optimize
     # query parameter handling. Checks for PostgreSQL adapter and compatibility.

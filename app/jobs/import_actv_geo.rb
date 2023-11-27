@@ -45,6 +45,14 @@ module Jobs
           end
           raise "Errore nell'esecuzione del comando ogr2ogr" if status.exitstatus != 0
 
+          Application['database'].add_index :trips, :trip_id
+          Application['database'].add_index :stop_times, :trip_id
+          Application['database'].add_index :stop_times, :stop_sequence
+          Application['database'].add_index :stops, :stop_id
+          Application['database'].add_index :shapes, %i[shape_id wkb_geometry]
+          Application['database'].add_index :shapes, :shape_pt_sequence
+          Application['database'].add_index :routes, :route_id
+
           puts '===END OF IMPORT==='
         end
       end

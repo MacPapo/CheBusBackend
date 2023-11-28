@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
+# frozen_string_literal: true
+
 module Jobs
   class ImportPgrouting
     def self.perform
       Application['database'][:edge_table].delete if Application['database'].table_exists?(:edge_table)
 
       trip_map = Application['database'][:trips].select_map(%i[trip_id shape_id])
+      processed_edges = Set.new
 
       trip_map.each do |trip_id, shape_id|
         stop_times = Application['database'][:stop_times]
@@ -14,15 +17,17 @@ module Jobs
                        .select_map([:stop_id, :stop_sequence])
 
         stop_times.each_cons(2) do |a, b|
+          next if processed_edges.include?([a[0], b[0]])
+
           stop_a = Application['database'][:stops].select(:stop_lat, :stop_lon, :wkb_geometry).where(stop_id: a[0]).first
           stop_b = Application['database'][:stops].select(:stop_lat, :stop_lon, :wkb_geometry).where(stop_id: b[0]).first
 
           shape_a_pt_sequence = Application['database'][:shapes]
-                      .select(:shape_pt_sequence, :shape_dist_traveled)
-                      .where(shape_id: shape_id, wkb_geometry: stop_a[:wkb_geometry]).first
+                                  .select(:shape_pt_sequence, :shape_dist_traveled)
+                                  .where(shape_id: shape_id, wkb_geometry: stop_a[:wkb_geometry]).first
           shape_b_pt_sequence = Application['database'][:shapes]
-                      .select(:shape_pt_sequence, :shape_dist_traveled)
-                      .where(shape_id: shape_id, wkb_geometry: stop_b[:wkb_geometry]).first
+                                  .select(:shape_pt_sequence, :shape_dist_traveled)
+                                  .where(shape_id: shape_id, wkb_geometry: stop_b[:wkb_geometry]).first
 
           shape_map = Application['database'][:shapes]
                         .where(
@@ -53,14 +58,13 @@ module Jobs
               buses: formatted_buses,
               the_geom: line_geometry
             )
+
+            processed_edges.add([a[0], b[0]])
           else
             puts "Nessun punto shape trovato tra A:#{a[0]} e B:#{b[0]}"
           end
         end
       end
-
-      Application['database'].add_index :edge_table, :source
-      Application['database'].add_index :edge_table, :target
 
       puts '=== FINISHED ==='
     end

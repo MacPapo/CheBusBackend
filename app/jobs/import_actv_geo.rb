@@ -10,7 +10,7 @@ module Jobs
     def self.perform
       # Inizia una transazione
       Application['database'].transaction do
-        tables = %I[stop_times trips routes agency shapes shapes_geom calendar calendar_dates stops]
+        tables = %I[stop_times trips routes agency shapes shapes_geom calendar calendar_dates stops edge_table]
 
         tables.each do |table|
           print "Tring to drop table #{table}... "
@@ -45,6 +45,20 @@ module Jobs
           end
           raise "Errore nell'esecuzione del comando ogr2ogr" if status.exitstatus != 0
 
+          Application['database'].create_table :edge_table do
+            primary_key :id
+            Integer :source
+            Integer :target
+            Float :cost
+            Float :reverse_cost
+            column :buses, 'text[]'
+            Float :x1
+            Float :y1
+            Float :x2
+            Float :y2
+            column :the_geom, 'geometry(LineString)'
+          end
+
           Application['database'].add_index :trips, :trip_id
           Application['database'].add_index :stop_times, :trip_id
           Application['database'].add_index :stop_times, :stop_sequence
@@ -52,6 +66,10 @@ module Jobs
           Application['database'].add_index :shapes, %i[shape_id wkb_geometry]
           Application['database'].add_index :shapes, :shape_pt_sequence
           Application['database'].add_index :routes, :route_id
+
+          Application['database'].add_index :edge_table, :source
+          Application['database'].add_index :edge_table, :target
+          Application['database'].add_index :edge_table, :the_geom, type: :gist
 
           puts '===END OF IMPORT==='
         end

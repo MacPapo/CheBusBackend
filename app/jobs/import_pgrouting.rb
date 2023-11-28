@@ -41,9 +41,10 @@ module Jobs
             buses = Application['database'][:trips]
                       .join(:routes, route_id: :route_id)
                       .where(trip_id: trip_id)
-                      .select(:route_short_name)
-                      .distinct
-            formatted_buses = "{#{buses.join(',')}}"
+                      .select_map(:route_short_name)
+                      .uniq
+            formatted_buses = buses.join(',')
+            formatted_buses = "{#{formatted_buses}}"
             line_geometry = Sequel.lit("ST_MakeLine(ST_SetSRID(ST_MakePoint(#{stop_a[:stop_lon]}, #{stop_a[:stop_lat]}), 4326), ST_SetSRID(ST_MakePoint(#{stop_b[:stop_lon]}, #{stop_b[:stop_lat]}), 4326))")
 
             Application['database'][:edge_table].insert(

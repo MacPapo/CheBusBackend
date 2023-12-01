@@ -13,8 +13,8 @@ gem 'rake'
 # Sequel: The Database Toolkit
 gem 'sequel', '>= 5.41'
 
-# Faster SELECTs when using Sequel with pg
-gem 'sequel_pg', '>= 1.14'
+# SQLite support
+gem 'sqlite3'
 
 # A runtime developer console
 gem 'pry'
@@ -36,8 +36,6 @@ gem 'dry-system'
 
 gem 'dry-validation'
 
-gem 'bootsnap', require: false
-
 # A gem providing "time travel" and "time freezing" capabilities
 gem 'timecop'
 
@@ -46,6 +44,9 @@ gem 'gtfs'
 group :development, :test do
   # A Ruby gem to load environment variables from '.env'.
   gem 'dotenv'
+
+  # LSP
+  gem 'solargraph'
 
   # A Ruby static code analyzer and formatter, based on the comunity Ruby stype guide.
   gem 'rubocop'

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
+# Sas
 module RufusScheduler
-
-  def self.first_import
-    puts "== IMPORT JOB STARTED =="
+  def self.import_stops
+    puts '== IMPORT JOB STARTED =='
     Jobs::ImportActv.perform
   end
 
@@ -20,5 +20,4 @@ module RufusScheduler
   # end
 
   # scheduler.join # Questo tiene in esecuzione lo scheduler
-  
 end

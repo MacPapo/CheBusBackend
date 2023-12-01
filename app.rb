@@ -30,7 +30,6 @@ class App < Roda
   # Sets default headers for all responses. Includes headers for security and content type.
   plugin :default_headers,
          'content-type' => 'application/json',
-         'strict-transport-security' => 'max-age=16070400;',
          'x-frame-options' => 'deny',
          'x-content-type-options' => 'nosniff',
          'x-xss-protection' => '1; mode=block'

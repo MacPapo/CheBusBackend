@@ -59,3 +59,4 @@ build-iPhoneSimulator/
 /db/*.sql
 *.log
 /.env.production
+/roda_development

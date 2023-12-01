@@ -39,10 +39,6 @@ module Models
   #   @return [String] indicates the level of wheelchair accessibility at the stop
   #
   class Stop < Sequel::Model
-    # Associates multiple StopTime objects with this Stop.
-    # Each StopTime represents a specific time a vehicle stops here.
-    # @return [Array<StopTime>] an array of StopTime objects associated with this stop
-    one_to_many :stop_times, key: :stop_id
   end
 
   # Table: stops

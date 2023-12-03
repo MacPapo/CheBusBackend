@@ -60,3 +60,4 @@ build-iPhoneSimulator/
 *.log
 /.env.production
 /roda_development
+/otp/

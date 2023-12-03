@@ -31,7 +31,7 @@ module Models
   class Agency < Sequel::Model
     # Associates multiple Route objects with this agency.
     # @return [Array<Route>] an array of Route objects associated with this agency
-    one_to_many :routes, key: :agency_id
+    one_to_many :gtfs_status, key: :agency_id
   end
 
   # Table: agencies

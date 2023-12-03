@@ -16,10 +16,6 @@ gem 'sequel', '>= 5.41'
 # SQLite support
 gem 'sqlite3'
 
-# A runtime developer console
-gem 'pry'
-gem 'pry-doc'
-
 # YARD is a Ruby Documentation tool
 gem 'yard'
 
@@ -40,6 +36,7 @@ gem 'dry-validation'
 gem 'timecop'
 
 gem 'gtfs'
+gem 'down'
 
 group :development, :test do
   # A Ruby gem to load environment variables from '.env'.

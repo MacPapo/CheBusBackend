@@ -6,6 +6,7 @@ require_relative './system/application'
 require 'gtfs'
 require 'down'
 require 'date'
+require 'uri'
 
 # Enable database component.
 Application.start(:database)
@@ -16,14 +17,23 @@ Application.start(:logger)
 # Add existing Logger instance to DB.loggers collection.
 Application['database'].loggers << Application['logger']
 
+BUILD_CONFIG =
+  { osmWayPropertySet: 'it' }.freeze
+
+ROUTER_CONFIG =
+  {
+    timeouts: [5, 4, 3, 1],
+    routingDefaults: { driveOnRight: true }
+  }.freeze
+
 migrate =
   lambda do |version|
-  # Enable Sequel migration extension.
-  Sequel.extension(:migration)
+    # Enable Sequel migration extension.
+    Sequel.extension(:migration)
 
-  # Perform migrations based on migration files in a specified directory.
-  Sequel::Migrator.apply(Application['database'], 'db/migrate', version)
-end
+    # Perform migrations based on migration files in a specified directory.
+    Sequel::Migrator.apply(Application['database'], 'db/migrate', version)
+  end
 
 today = -> { Date.today.strftime('%Y-%m-%d') }
 
@@ -32,6 +42,11 @@ download =
     temp_file = Down.download(url)
     FileUtils.mv(temp_file.path, output)
     puts "File scaricato e salvato come #{output}"
+  end
+
+add_json_config =
+  lambda do |filename, data|
+    File.write(filename, data)
   end
 
 namespace :db do
@@ -59,16 +74,33 @@ namespace :otp do
     Dir.mkdir('otp') unless Dir.exist? 'otp'
     FileUtils.cd('otp')
 
-    Rake::Task['otp:download_jar'].execute unless File.exist? 'otp.jar'
-    Rake::Task['otp:download_osm'].execute unless Dir.exist? today.call.to_s
+    Rake::Task['downloader:otp_jar'].execute unless File.exist? 'otp.jar'
+    Rake::Task['downloader:osm'].execute unless Dir.exist? today.call.to_s
 
-    Rake::Task['otp:update_or_replace_version'].execute
+    Rake::Task['otp:update_version'].execute
 
-    FileUtils.cd('..')
+    FileUtils.cd(today.call.to_s)
+    Rake::Task['otp:add_config'].execute
+
+    FileUtils.cd('../../')
   end
 
+  desc 'Update or replace current link.'
+  task :update_version do
+    FileUtils.rm_f('current') if File.symlink?('current')
+    FileUtils.ln_s(today.call.to_s, 'current')
+  end
+
+  desc 'Add Config.'
+  task :add_config do
+    add_json_config.call('build-config.json',  Oj.dump(BUILD_CONFIG))
+    add_json_config.call('router-config.json', Oj.dump(ROUTER_CONFIG))
+  end
+end
+
+namespace :downloader do
   desc 'Download otp JAR.'
-  task :download_jar do
+  task :otp_jar do
     url = 'https://repo1.maven.org/maven2/org/opentripplanner/otp/2.4.0/otp-2.4.0-shaded.jar'
     output = 'otp.jar'
 
@@ -80,7 +112,7 @@ namespace :otp do
   end
 
   desc 'Download OSM data.'
-  task :download_osm do
+  task :osm do
     url = 'http://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf'
     output_dir = today.call.to_s
     file = 'nord-est.osm.pbf'
@@ -92,11 +124,6 @@ namespace :otp do
       puts "Errore nel download del file: #{e.message}"
     end
   end
-
-  desc 'Structure the otp subdirectory structure.'
-  task :update_or_replace_version do
-    FileUtils.ln_sf(today.call.to_s, 'current')
-  end
 end
 
 namespace :gtfs do
@@ -107,7 +134,7 @@ namespace :gtfs do
 
   desc 'Scrap for new GTFS data and write if TRUE in DATABASE.'
   task :scrape do
-    # Check for new GTFS, but
+    Jobs::ScrapeGtfs.perform
   end
 
   desc 'Download the GTFS data if new versione is available.'

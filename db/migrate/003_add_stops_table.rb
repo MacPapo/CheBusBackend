@@ -5,12 +5,12 @@ Sequel.migration do
     create_table(:stops) do
       primary_key      :id
 
-      Integer          :stop_id
+      Integer          :stop_id,        null: false
       String           :stop_code
-      String           :stop_name
-      Float            :stop_lat
-      Float            :stop_lon
-      String           :stop_category
+      String           :stop_name,      null: false
+      Float            :stop_lat,       null: false
+      Float            :stop_lon,       null: false
+      String           :stop_category,  null: false
       String           :parent_station
 
       index :stop_id

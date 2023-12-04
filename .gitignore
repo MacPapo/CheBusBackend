@@ -61,3 +61,4 @@ build-iPhoneSimulator/
 /.env.production
 /roda_development
 /otp/
+/gtfs_urls.csv

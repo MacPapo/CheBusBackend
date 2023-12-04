@@ -36,6 +36,7 @@ gem 'dry-validation'
 gem 'timecop'
 
 gem 'gtfs'
+
 gem 'down'
 
 group :development, :test do
@@ -44,6 +45,10 @@ group :development, :test do
 
   # LSP
   gem 'solargraph'
+
+  # PRY
+  gem 'pry'
+  gem 'pry-doc'
 
   # A Ruby static code analyzer and formatter, based on the comunity Ruby stype guide.
   gem 'rubocop'

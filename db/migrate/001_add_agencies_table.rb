@@ -6,10 +6,10 @@ Sequel.migration do
       primary_key      :id
 
       String           :agency_id,       null: false
-      String           :category,        null: false
+      String           :agency_name,     null: false
 
       index :agency_id
-      index :category
+      index :agency_name
     end
   end
 end

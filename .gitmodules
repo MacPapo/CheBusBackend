@@ -1,0 +1,3 @@
+[submodule "app/dbscan"]
+	path = app/dbscan
+	url = https://github.com/Visco01/dbscan

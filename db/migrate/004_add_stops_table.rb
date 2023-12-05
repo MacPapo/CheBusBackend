@@ -12,8 +12,7 @@ Sequel.migration do
       Float            :stop_lon,            null: false
       String           :stop_category,       null: false
       String           :parent_station
-      Integer          :cluster_id,          null: false
-      foreign_key      :id, :stop_clusters,  null: false
+      foreign_key      :cluster_id, :stop_clusters, key: :id,  null: false
 
       index :stop_id
       index :stop_name

@@ -23,7 +23,7 @@ module Jobs
 
     def self.clean_data
       if Application['database'].table_exists? :stops
-        Models::Stops.delete
+        Models::Stop.delete
       else
         Application['database'].create_table :stops do
           Integer                   :stop_id

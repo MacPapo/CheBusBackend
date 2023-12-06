@@ -137,9 +137,9 @@ namespace :gtfs do
     Jobs::ScrapeGtfs.perform
   end
 
-  desc 'Download the GTFS data if new versione is available.'
-  task :download do
-    # Check the DB and download only the new version of GTFS
+  desc 'Import GTFS stop clusters.'
+  task :clusters do
+    Jobs::ImportStopClusters.perform
   end
 end
 

@@ -2,6 +2,8 @@
 
 require 'gtfs_stops_clustering'
 
+include GtfsStopsClustering
+
 module Jobs
   include Models
 
@@ -62,7 +64,7 @@ module Jobs
         zip_files << zip_file
       end
 
-      clusters = GtfsStopsClustering.build(zip_files, 0.3, 1, 0.85, FILE_CONFIG_NAME)
+      clusters = build_clusters(zip_files, 0.3, 1, 0.85, FILE_CONFIG_NAME)
 
       stops_list = []
       stop_clusters_list = []

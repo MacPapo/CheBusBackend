@@ -64,7 +64,7 @@ GEM
       multi_json
       rake
       rubyzip (~> 1.1)
-    gtfs_stops_clustering (0.1.2)
+    gtfs_stops_clustering (0.1.3)
       csv (~> 3.2, >= 3.2.8)
       distance_measures (~> 0.0.6)
       geocoder (~> 1.8, >= 1.8.2)
@@ -208,7 +208,7 @@ DEPENDENCIES
   dry-system
   dry-validation
   gtfs
-  gtfs_stops_clustering
+  gtfs_stops_clustering (~> 0.1.3)
   newrelic_rpm
   oj
   pry

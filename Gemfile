@@ -41,7 +41,7 @@ gem 'down'
 
 gem 'daemons'
 
-gem 'gtfs_stops_clustering'
+gem 'gtfs_stops_clustering', '~> 0.1.3'
 
 group :development, :test do
   # A Ruby gem to load environment variables from '.env'.

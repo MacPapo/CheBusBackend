@@ -91,6 +91,7 @@ namespace :argo do
   task :start do
     fprint.call('Starting OTP Server...')
     pwd = Dir.pwd
+    FileUtils.mkdir_p('tmp/pids') unless Dir.exist? 'tmp/pids'
     puts 'DONE'
     Daemons.daemonize(app_name: OTP_SERVER_PID, log_output: true)
     exec START_OTP_COMMAND.call(

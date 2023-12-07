@@ -39,6 +39,8 @@ gem 'gtfs'
 
 gem 'down'
 
+gem 'open4'
+
 group :development, :test do
   # A Ruby gem to load environment variables from '.env'.
   gem 'dotenv'

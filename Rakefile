@@ -4,6 +4,7 @@
 
 require_relative './system/application'
 require 'gtfs'
+require 'open4'
 require 'down'
 require 'date'
 require 'uri'
@@ -18,13 +19,35 @@ Application.start(:logger)
 Application['database'].loggers << Application['logger']
 
 BUILD_CONFIG =
-  { osmWayPropertySet: 'it' }.freeze
+  {
+    osmWayPropertySet: 'it'
+  }.freeze
+
+OTP_CONFIG =
+  {
+    otpFeatures: {
+      ParallelRouting: true,
+      FloatingBike: false
+    }
+  }.freeze
 
 ROUTER_CONFIG =
   {
     timeouts: [5, 4, 3, 1],
     routingDefaults: { driveOnRight: true }
   }.freeze
+
+BUILD_GRAPH_MEMORY = 6
+BUILD_GRAPH_COMMAND =
+  ->(jar, dir) { "java -Xmx#{BUILD_GRAPH_MEMORY}G -jar #{jar} --build --save #{dir}" }
+START_OTP_COMMAND =
+  ->(jar, dir) { "java -Xmx#{BUILD_GRAPH_MEMORY}G -jar #{jar} --load #{dir}" }
+
+CURRENT_JAR   = 'otp/otp.jar'
+CURRENT_GRAPH = 'otp/current'
+
+URL_JAR = 'https://repo1.maven.org/maven2/org/opentripplanner/otp/2.4.0/otp-2.4.0-shaded.jar'
+URL_OSM = 'http://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf'
 
 migrate =
   lambda do |version|
@@ -47,6 +70,14 @@ download =
 add_json_config =
   lambda do |filename, data|
     File.write(filename, data)
+  end
+
+launch_process =
+  lambda do |prog|
+    Open4.popen4(prog) do |_pid, _stdin, stdout, stderr|
+      puts "Output: #{stdout.read}" # Deleteme in prod
+      puts "Error: #{stderr.read}"
+    end
   end
 
 namespace :db do
@@ -74,10 +105,10 @@ namespace :otp do
     Dir.mkdir('otp') unless Dir.exist? 'otp'
     FileUtils.cd('otp')
 
-    Rake::Task['downloader:otp_jar'].execute unless File.exist? 'otp.jar'
-    Rake::Task['downloader:osm'].execute unless Dir.exist? today.call.to_s
-
-    Rake::Task['otp:update_version'].execute
+    puts 'Downloading...'
+    Rake::Task['downloader:all'].execute
+    puts 'Linking new current folder...'
+    Rake::Task['otp:link_new_version'].execute
 
     FileUtils.cd(today.call.to_s)
     Rake::Task['otp:add_config'].execute
@@ -86,7 +117,7 @@ namespace :otp do
   end
 
   desc 'Update or replace current link.'
-  task :update_version do
+  task :link_new_version do
     FileUtils.rm_f('current') if File.symlink?('current')
     FileUtils.ln_s(today.call.to_s, 'current')
   end
@@ -95,33 +126,49 @@ namespace :otp do
   task :add_config do
     add_json_config.call('build-config.json',  Oj.dump(BUILD_CONFIG))
     add_json_config.call('router-config.json', Oj.dump(ROUTER_CONFIG))
+    add_json_config.call('otp-config.json', Oj.dump(OTP_CONFIG))
+  end
+
+  desc 'Build or Rebuild graph.'
+  task :build_graph do
+    # Esegui il comando BUILD_GRAPH
+    status = launch_process.call(BUILD_GRAPH_COMMAND.call(CURRENT_JAR, CURRENT_GRAPH))
+    raise "Errore nell'esecuzione del comando Build Graph" if status.exitstatus != 0
+  end
+
+  desc 'Start OTP Server.'
+  task :start_otp do
+    # Esegui il comando START_OTP
+    status = launch_process.call(START_OTP_COMMAND.call(CURRENT_JAR, CURRENT_GRAPH))
+    raise "Errore nell'esecuzione del comando START OTP" if status.exitstatus != 0
   end
 end
 
 namespace :downloader do
+  error_download = ->(e) { puts "Error downloading file: #{e.message}" }
+
+  desc 'Download all.'
+  task :all do
+    Rake::Task['downloader:otp_jar'].execute unless File.exist? 'otp.jar'
+    Rake::Task['downloader:osm'].execute unless Dir.exist? today.call.to_s
+  end
+
   desc 'Download otp JAR.'
   task :otp_jar do
-    url = 'https://repo1.maven.org/maven2/org/opentripplanner/otp/2.4.0/otp-2.4.0-shaded.jar'
-    output = 'otp.jar'
-
-    begin
-      download.call(url, output)
-    rescue Down::Error => e
-      puts "Errore nel download del file: #{e.message}"
-    end
+    download.call(URL_JAR, 'otp.jar')
+  rescue Down::Error => e
+    error_download.call(e)
   end
 
   desc 'Download OSM data.'
   task :osm do
-    url = 'http://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf'
     output_dir = today.call.to_s
     file = 'nord-est.osm.pbf'
-
     begin
       FileUtils.mkdir_p output_dir unless Dir.exist? output_dir
-      download.call(url, "#{output_dir}/#{file}")
+      download.call(URL_OSM, "#{output_dir}/#{file}")
     rescue Down::Error => e
-      puts "Errore nel download del file: #{e.message}"
+      error_download.call(e)
     end
   end
 end
@@ -135,11 +182,6 @@ namespace :gtfs do
   desc 'Scrap for new GTFS data and write if TRUE in DATABASE.'
   task :scrape do
     Jobs::ScrapeGtfs.perform
-  end
-
-  desc 'Download the GTFS data if new versione is available.'
-  task :download do
-    # Check the DB and download only the new version of GTFS
   end
 end
 

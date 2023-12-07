@@ -10,11 +10,7 @@ module Jobs
     STATUS = { uptodate: 0, outdated: 1 }.freeze
 
     def self.perform
-      if bootstrap
-        puts 'Done.'
-      else
-        puts "File #{FILE_NAME} not found or Empty."
-      end
+      puts bootstrap ? 'Done!' : "File #{FILE_NAME} not found or Empty."
     end
 
     def self.bootstrap

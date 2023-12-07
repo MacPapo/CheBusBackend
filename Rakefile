@@ -4,8 +4,8 @@
 
 require_relative './system/application'
 require 'gtfs'
-require 'open4'
 require 'down'
+require 'daemons'
 require 'date'
 require 'uri'
 
@@ -16,7 +16,7 @@ Application.start(:database)
 Application.start(:logger)
 
 # Add existing Logger instance to DB.loggers collection.
-Application['database'].loggers << Application['logger']
+# Application['database'].loggers << Application['logger']
 
 BUILD_CONFIG =
   {
@@ -46,6 +46,8 @@ START_OTP_COMMAND =
 CURRENT_JAR   = 'otp/otp.jar'
 CURRENT_GRAPH = 'otp/current'
 
+OTP_SERVER_PID = 'tmp/pids/otp'
+
 URL_JAR = 'https://repo1.maven.org/maven2/org/opentripplanner/otp/2.4.0/otp-2.4.0-shaded.jar'
 URL_OSM = 'http://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf'
 
@@ -64,7 +66,7 @@ download =
   lambda do |url, output|
     temp_file = Down.download(url)
     FileUtils.mv(temp_file.path, output)
-    puts "File scaricato e salvato come #{output}"
+    puts "DONE: File downloaded as #{output}"
   end
 
 add_json_config =
@@ -72,20 +74,45 @@ add_json_config =
     File.write(filename, data)
   end
 
-launch_process =
-  lambda do |prog|
-    Open4.popen4(prog) do |_pid, _stdin, stdout, stderr|
-      puts "Output: #{stdout.read}" # Deleteme in prod
-      puts "Error: #{stderr.read}"
+fprint = ->(str) { printf('%-40s', str) }
+
+namespace :argo do
+  desc 'Setup Argo.'
+  task :setup do
+    puts 'Starting setup proces...'
+    Rake::Task['db:migrate'].execute
+    Rake::Task['otp:setup'].execute
+    Rake::Task['gtfs:setup'].execute
+    Rake::Task['otp:build_graph'].execute
+    puts 'Setup done!'
+  end
+
+  desc 'Start OTP Server.'
+  task :start do
+    fprint.call('Starting OTP Server...')
+    pwd = Dir.pwd
+    puts 'DONE'
+    Daemons.daemonize(app_name: OTP_SERVER_PID, log_output: true)
+    exec START_OTP_COMMAND.call(
+           File.join(pwd, 'otp/otp.jar'), # JAR
+           File.join(pwd, 'otp/current')  # CURRENT GRAPH DIR
+         )
+  end
+
+  desc 'Stop OTP Server.'
+  task :stop do
+    fprint.call('Stopping OTP Server...')
+    pid = File.read("#{OTP_SERVER_PID}.pid").to_i
+    begin
+      Process.kill('TERM', pid)
+      puts 'DONE: OTP Server terminated.'
+    rescue Errno::ESRCH
+      puts 'FAIL: OTP Server PID not found.'
     end
   end
+end
 
 namespace :db do
-  desc 'Insert data in the database.'
-  task :import do
-    RufusScheduler.import_stops
-  end
-
   desc 'Migrate the database.'
   task :migrate do
     migrate.call(nil)
@@ -104,15 +131,10 @@ namespace :otp do
   task :setup do
     Dir.mkdir('otp') unless Dir.exist? 'otp'
     FileUtils.cd('otp')
-
-    puts 'Downloading...'
     Rake::Task['downloader:all'].execute
-    puts 'Linking new current folder...'
     Rake::Task['otp:link_new_version'].execute
-
     FileUtils.cd(today.call.to_s)
     Rake::Task['otp:add_config'].execute
-
     FileUtils.cd('../../')
   end
 
@@ -132,20 +154,12 @@ namespace :otp do
   desc 'Build or Rebuild graph.'
   task :build_graph do
     # Esegui il comando BUILD_GRAPH
-    status = launch_process.call(BUILD_GRAPH_COMMAND.call(CURRENT_JAR, CURRENT_GRAPH))
-    raise "Errore nell'esecuzione del comando Build Graph" if status.exitstatus != 0
-  end
-
-  desc 'Start OTP Server.'
-  task :start_otp do
-    # Esegui il comando START_OTP
-    status = launch_process.call(START_OTP_COMMAND.call(CURRENT_JAR, CURRENT_GRAPH))
-    raise "Errore nell'esecuzione del comando START OTP" if status.exitstatus != 0
+    system(BUILD_GRAPH_COMMAND.call(CURRENT_JAR, CURRENT_GRAPH))
   end
 end
 
 namespace :downloader do
-  error_download = ->(e) { puts "Error downloading file: #{e.message}" }
+  error_download = ->(e) { puts "FAIL: Error downloading file: #{e.message}" }
 
   desc 'Download all.'
   task :all do
@@ -155,6 +169,7 @@ namespace :downloader do
 
   desc 'Download otp JAR.'
   task :otp_jar do
+    fprint.call('Downloading OTP')
     download.call(URL_JAR, 'otp.jar')
   rescue Down::Error => e
     error_download.call(e)
@@ -162,6 +177,7 @@ namespace :downloader do
 
   desc 'Download OSM data.'
   task :osm do
+    fprint.call('Downloading OSM')
     output_dir = today.call.to_s
     file = 'nord-est.osm.pbf'
     begin
@@ -174,14 +190,22 @@ namespace :downloader do
 end
 
 namespace :gtfs do
-  desc 'Setup.'
+  desc 'Setup all GTFS tasks.'
   task :setup do
-    # SAS
+    Rake::Task['gtfs:scrape'].execute
+    Rake::Task['gtfs:create_clusters'].execute
   end
 
   desc 'Scrap for new GTFS data and write if TRUE in DATABASE.'
   task :scrape do
+    fprint.call('Importing GTFS data')
     Jobs::ScrapeGtfs.perform
+  end
+
+  desc 'Import GTFS stop clusters.'
+  task :create_clusters do
+    fprint.call('Importing Clusters data')
+    Jobs::ImportStopClusters.perform
   end
 end
 

@@ -30,12 +30,10 @@ module Routes::API::V2::Stops
   # @param _r [Roda::RodaRequest] The Roda request object.
   # @return [String] Serialized JSON response containing all stops.
   def self.handle_all_stops_request(_r)
-    query = Application['database'][:stops]
-      .select(:stop_name)
-      .distinct
-      .to_a
+    cluster = Models::Stop.give_all_stops_no_cluster.map { |x| x.stop_name }
+    cluster += Models::StopCluster.give_all_stops_cluster.map { |x| x.cluster_name }
 
-    APIResponse.success(_r.response, Serializers::StopSerializer.new(query, view: :stop_only_name).to_json)
+    APIResponse.success(_r.response, cluster.to_json)
   end
 
   # Handles requests for a specific bus stop by its ID.

@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+# frozen-string-literal: true
+
+require 'fileutils'
+
+fprint = ->(str) { printf('%-40s', str) }
+PWD = Dir.pwd
+OTP_SERVER_PID = 'tmp/pids/otp'
+PID_FILE = File.join(PWD, "#{OTP_SERVER_PID}.pid")
+
+fprint.call('Stopping OTP Server...')
+if File.exist? PID_FILE
+  pid = File.read(PID_FILE).to_i
+  begin
+    Process.kill('TERM', pid)
+    Dir.glob('tmp/pids/otp*').each { |pid_file| FileUtils.rm(pid_file) }
+    puts 'DONE: OTP Server terminated.'
+  rescue Errno::ESRCH
+    puts 'FAIL: OTP Server PID not found.'
+  end
+else
+  puts 'FAIL: Server alredy stopped!'
+end

@@ -5,18 +5,8 @@
 require_relative './system/application'
 require 'gtfs'
 require 'down'
-require 'daemons'
 require 'date'
 require 'uri'
-
-# Enable database component.
-Application.start(:database)
-
-# Enable logger component.
-Application.start(:logger)
-
-# Add existing Logger instance to DB.loggers collection.
-# Application['database'].loggers << Application['logger']
 
 BUILD_CONFIG =
   {
@@ -37,16 +27,12 @@ ROUTER_CONFIG =
     routingDefaults: { driveOnRight: true }
   }.freeze
 
-BUILD_GRAPH_MEMORY = 6
+OTP_MEMORY = 6
 BUILD_GRAPH_COMMAND =
-  ->(jar, dir) { "java -Xmx#{BUILD_GRAPH_MEMORY}G -jar #{jar} --build --save #{dir}" }
-START_OTP_COMMAND =
-  ->(jar, dir) { "java -Xmx#{BUILD_GRAPH_MEMORY}G -jar #{jar} --load #{dir}" }
+  ->(jar, dir) { "java -Xmx#{OTP_MEMORY}G -jar #{jar} --build --save #{dir}" }
 
 CURRENT_JAR   = 'otp/otp.jar'
 CURRENT_GRAPH = 'otp/current'
-
-OTP_SERVER_PID = 'tmp/pids/otp'
 
 URL_JAR = 'https://repo1.maven.org/maven2/org/opentripplanner/otp/2.4.0/otp-2.4.0-shaded.jar'
 URL_OSM = 'http://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf'
@@ -85,31 +71,6 @@ namespace :argo do
     Rake::Task['gtfs:setup'].execute
     Rake::Task['otp:build_graph'].execute
     puts 'Setup done!'
-  end
-
-  desc 'Start OTP Server.'
-  task :start do
-    fprint.call('Starting OTP Server...')
-    pwd = Dir.pwd
-    FileUtils.mkdir_p('tmp/pids') unless Dir.exist? 'tmp/pids'
-    puts 'DONE'
-    Daemons.daemonize(app_name: OTP_SERVER_PID, log_output: true)
-    exec START_OTP_COMMAND.call(
-           File.join(pwd, 'otp/otp.jar'), # JAR
-           File.join(pwd, 'otp/current')  # CURRENT GRAPH DIR
-         )
-  end
-
-  desc 'Stop OTP Server.'
-  task :stop do
-    fprint.call('Stopping OTP Server...')
-    pid = File.read("#{OTP_SERVER_PID}.pid").to_i
-    begin
-      Process.kill('TERM', pid)
-      puts 'DONE: OTP Server terminated.'
-    rescue Errno::ESRCH
-      puts 'FAIL: OTP Server PID not found.'
-    end
   end
 end
 

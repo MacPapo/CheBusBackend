@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+# frozen-string-literal: true
+
+require 'daemons'
+
+fprint = ->(str) { printf('%-40s', str) }
+OTP_MEMORY = 6
+OTP_SERVER_PID = 'tmp/pids/otp'
+PWD = Dir.pwd
+START_OTP_COMMAND =
+  ->(jar, dir) { "java -Xmx#{OTP_MEMORY}G -jar #{jar} --load #{dir}" }
+
+fprint.call('Starting OTP Server...')
+if File.exist? File.join(PWD, "#{OTP_SERVER_PID}.pid")
+  puts 'FAIL: Server already up and running!'
+else
+  FileUtils.mkdir_p('tmp/pids') unless Dir.exist? 'tmp/pids'
+  puts 'DONE'
+  Daemons.daemonize(app_name: OTP_SERVER_PID, log_output: true)
+  exec START_OTP_COMMAND.call(
+         File.join(PWD, 'otp/otp.jar'), # JAR
+         File.join(PWD, 'otp/current')  # CURRENT GRAPH DIR
+       )
+end

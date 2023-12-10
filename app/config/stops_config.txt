@@ -23,3 +23,7 @@ Torcello A RICHIESTA,Torcello
 Lido S.Nicolo' A RICHIEST,Lido S.Nicolo'
 Bacini  A RICHIESTA,Bacini
 Caroman A Richiesta,Caroman
+"Tronchetto ""B""",Tronchetto
+"Tronchetto ""A""",Tronchetto
+Chioggia Civico 78,Chioggia Civico 64/78
+Chioggia Civico 64,Chioggia Civico 64/78

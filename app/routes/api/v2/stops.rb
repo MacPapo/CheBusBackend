@@ -23,6 +23,27 @@ module Routes::API::V2::Stops
           Routes::API::V2::Stops.handle_departures_request(r, stopname, datetime, interval)
         end
       end
+
+      r.on 'graphql' do
+        r.get do
+          res = Application['graphql'].query(
+            Graphql::PlanQueries::Plan,
+            variables: {
+              flat: 45.42584,
+              flon: 12.36108,
+              tlat: 45.41740,
+              tlon: 12.36897,
+              date: '2023-12-10',
+              time: '15:00'
+            }
+          )
+
+          APIResponse.success(
+            r.response,
+            Serializers::PlanSerializer.new(res.data.plan.itineraries).to_json
+          )
+        end
+      end
     end
   end
 
@@ -71,7 +92,7 @@ module Routes::API::V2::Stops
         .select(:trip_headsign, :service_id, :t_departure, :route_color, :route_text_color, :route_short_name, :trip_id)
         .limit(MAX_DEPARTURES)
         .to_a
-      
+
       APIResponse.success(_r.response, Serializers::StopSerializer.new(query.sort_by { |departure| departure[:t_departure] }, view: :departures).to_json)
     else
       APIResponse.error(_r.response, validation_result.errors.to_h, 400)

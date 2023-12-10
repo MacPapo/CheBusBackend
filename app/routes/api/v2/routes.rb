@@ -17,13 +17,12 @@ module Routes::API::V2::Routes
       # @param interval [String] The time interval in minutes.
       r.get(params!: ROUTE_PARAMS) do |from, to, datetime, interval|
         validation_result = Routes::API::V2::Routes.validate_params(from, to, datetime, interval)
-        
+
         if validation_result.success?
           result = Routes::API::V2::Routes.handle_routes_request(from, to, datetime, interval)
           result ? APIResponse.success(response, result) : APIResponse.error(response, 'No routes found', 404)
         else
-          error_messages = validation_result.errors.to_h
-          APIResponse.error(response, error_messages, 400)
+          APIResponse.error(response, validation_result.errors.to_h, 400)
         end
       end
     end
@@ -39,7 +38,7 @@ module Routes::API::V2::Routes
     contract = Validations::RoutesValidation::RouteContract.new
     contract.call(from_stop_name:, to_stop_name:, datetime:, interval:)
   end
-  
+
   # Handles the request for route information.
   # Fetches the route data based on the validated parameters.
   # @param from_stop_name [String] The name of the departure stop.

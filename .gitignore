@@ -64,3 +64,4 @@ build-iPhoneSimulator/
 /gtfs_urls.csv
 *.DS_Store
 /stop_clusters.txt
+/*.rdb

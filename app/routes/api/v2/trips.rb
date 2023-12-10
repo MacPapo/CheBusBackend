@@ -39,7 +39,7 @@ module Routes::API::V2::Trips
 
             if validation_result.success?
               result = Routes::API::V2::Trips.handle_stops_request(id, departure_stop_name, service_id, datetime)
-              result ? APIResponse.success(response, result) : APIResponse.error(response, 'No stops found', 404)  
+              result ? APIResponse.success(response, result) : APIResponse.error(response, 'No stops found', 404)
             else
               error_messages = validation_result.errors.to_h
               APIResponse.error(response, error_messages, 400)
@@ -68,7 +68,7 @@ module Routes::API::V2::Trips
   # @param datetime [String] Date and time of the trip.
   # @return [Array<Hash>, Hash] An array of stop information for the trip or an error message if validation fails.
   def self.handle_stops_request(id, departure_stop_name, service_id, datetime)
-    
+
     stop_ids = Application['database'][:stops]
       .where(stop_name: departure_stop_name)
       .select_map(:stop_id)

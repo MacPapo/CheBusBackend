@@ -2,6 +2,7 @@
 # frozen-string-literal: true
 
 require 'daemons'
+require 'fileutils'
 
 fprint = ->(str) { printf('%-40s', str) }
 OTP_MEMORY = 6

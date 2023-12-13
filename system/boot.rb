@@ -5,6 +5,10 @@
 
 require_relative 'application'
 
+# Start GraphQL provider
+Application.start(:graphql)
+
+
 # Completes the application setup by finalizing the registration of application
 # classes and external dependencies located in the /system/providers folder.
 # This is a crucial step for preparing the application environment for use.

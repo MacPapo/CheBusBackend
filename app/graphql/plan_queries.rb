@@ -2,12 +2,25 @@
 
 module Graphql::PlanQueries
   Plan = Application['graphql'].parse <<-'GRAPHQL'
-query($flat: Float!, $flon: Float!, $tlat: Float!, $tlon: Float!, $date: String!, $time: String!) {
+query(
+    $flat: Float!,
+    $flon: Float!,
+    $tlat: Float!,
+    $tlon: Float!,
+    $search_window: Long!,
+    $date: String!,
+    $time: String!,
+) {
     plan(
         from: { lat: $flat, lon: $flon }
         to: { lat: $tlat, lon: $tlon }
-        date: $date,
-        time: $time,
+        date: $date
+        time: $time
+        searchWindow: $search_window
+        numItineraries: 50
+        transferPenalty: 30
+        walkReluctance: 60
+        waitReluctance: 1.0
         transportModes: [
             {
                 mode: TRANSIT

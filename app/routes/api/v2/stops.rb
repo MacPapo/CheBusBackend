@@ -29,12 +29,13 @@ module Routes::API::V2::Stops
           res = Application['graphql'].query(
             Graphql::PlanQueries::Plan,
             variables: {
-              flat: 45.42584,
-              flon: 12.36108,
-              tlat: 45.41740,
-              tlon: 12.36897,
-              date: '2023-12-10',
-              time: '15:00'
+              flat: 45.42551,
+              flon: 12.36083,
+              tlat: 45.42902,
+              tlon: 12.35616,
+              date: '2023-12-14',
+              time: '17:20',
+              search_window: 3600
             }
           )
 

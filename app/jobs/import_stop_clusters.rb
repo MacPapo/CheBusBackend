@@ -9,7 +9,8 @@ module Jobs
 
   # Clustering
   class ImportStopClusters
-    FILE_CONFIG_NAME = 'app/config/stops_config.txt'
+    FILE_CONFIG_NAME = 'stops_config.txt'
+    FILE_DUPLICATED_STOPS_NAME = 'duplicated_stops.txt'
     GTFS_PATH = 'otp/current'
 
     def self.perform
@@ -32,6 +33,16 @@ module Jobs
       Application['database'][:stop_clusters].delete
     end
 
+    def self.import_duplicated_stops
+      duplicated_stops = []
+      CSV.foreach(FILE_DUPLICATED_STOPS_NAME, headers: true) do |row|
+        stop_name = row['stop_name']
+        duplicated_stops << { stop_name: }
+      end
+
+      duplicated_stops
+    end
+
     def self.import_zip
       stops_data = []
       zip_files  = []
@@ -51,6 +62,7 @@ module Jobs
         end
         zip_files << zip_file
       end
+
       [stops_data.flatten, zip_files]
     end
 
@@ -64,11 +76,16 @@ module Jobs
 
       find_by_stop_id = ->(id) { stops_data.find { |stop| stop[:stop_id] == id }[:category] }
 
+      duplicated_stops = import_duplicated_stops
+      duplicated_stops.each do |duplicated_stop|
+        clusters.first[1].reject! { |stop| stop[:stop_name] == duplicated_stop[:stop_name] }
+        stops_data.reject! {  |stop| stop[:stop_name] == duplicated_stop[:stop_name] }
+      end
+
       # Creazione degli oggetti StopCluster
       clusters.each do |cluster_id, cluster|
         next if cluster_id == -1 || cluster.first.nil?
 
-        
         stop_clusters_list.push(
           Models::StopCluster.new(
             name: cluster.first[:cluster_name],

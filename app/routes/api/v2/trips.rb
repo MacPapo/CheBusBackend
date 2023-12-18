@@ -70,7 +70,7 @@ module Routes::API::V2::Trips
   def self.handle_stops_request(id, departure_stop_name, service_id, datetime)
 
     stop_ids = Application['database'][:stops]
-      .where(stop_name: departure_stop_name)
+      .where(name: departure_stop_name)
       .select_map(:stop_id)
 
     consec = Application['database'][:stop_times]

@@ -20,10 +20,11 @@ module Jobs
       return false if url_data.empty?
 
       url_data.each do |row|
-        category, url = row # row[0] -> CATEGORY, row[1] -> URL
+        category_name, url = row # row[0] -> CATEGORY, row[1] -> URL
         next unless valid_url?(url)
 
-        gtfs_status = find_or_initialize_gtfs_status(url, category)
+        category = self.find_category(category_name.upcase)
+        gtfs_status = self.find_or_initialize_gtfs_status(url, category)
         next if up_to_date?(gtfs_status)
 
         process_url(url, category, gtfs_status)
@@ -38,7 +39,11 @@ module Jobs
     end
 
     def self.find_or_initialize_gtfs_status(url, category)
-      Models::GtfsStatus.where(url:, category:).first || { url:, category:, updated_at: nil }
+      Models::GtfsStatus.where(url:).first || { url:, category: category.id, updated_at: nil }
+    end
+
+    def self.find_category(name)
+      Models::Category.where(name:).first
     end
 
     def self.up_to_date?(gtfs_status)
@@ -53,8 +58,8 @@ module Jobs
       latest_update = fetch_latest_update(uri)
       return if latest_update.nil? || latest_update == gtfs_status[:updated_at]
 
-      out_file_name = download_and_process(uri, category)
-      update_database(uri, category, latest_update, out_file_name)
+      out_file_name = download_and_process(uri, category.name)
+      update_database(uri, category.id, latest_update, out_file_name)
     end
 
     def self.fetch_latest_update(uri)

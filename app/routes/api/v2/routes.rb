@@ -69,8 +69,8 @@ module Routes::API::V2::Routes
   # @param to_stop_name [String] The arrival stop name.
   # @return [Array<Array<Integer>>] Arrays of stop IDs for departure and arrival stops.
   def self.fetch_stop_ids(from_stop_name, to_stop_name)
-    from_stop_ids = Application['database'][:stops].where(stop_name: from_stop_name).select_map(:stop_id)
-    to_stop_ids = Application['database'][:stops].where(stop_name: to_stop_name).select_map(:stop_id)
+    from_stop_ids = Application['database'][:stops].where(name: from_stop_name).select_map(:stop_id)
+    to_stop_ids = Application['database'][:stops].where(name: to_stop_name).select_map(:stop_id)
     [from_stop_ids, to_stop_ids]
   end
 

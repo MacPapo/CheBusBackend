@@ -6,12 +6,11 @@ Sequel.migration do
       primary_key      :id
 
       foreign_key      :agency_id, :agencies,              null: false
+      foreign_key      :category,  :categories,            null: false
+
       String           :url,                               null: false
-      String           :category,                          null: false
       String           :created_at,                        null: false
       String           :updated_at,                        null: false
-
-      check(category: %w[BUS FERRY])
 
       index :agency_id
       index :category

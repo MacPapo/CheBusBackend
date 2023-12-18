@@ -7,6 +7,9 @@ require 'gtfs'
 require 'down'
 require 'date'
 require 'uri'
+require 'set'
+
+GTFS_URL = 'gtfs_urls.csv'
 
 BUILD_CONFIG =
   {
@@ -154,8 +157,33 @@ end
 namespace :gtfs do
   desc 'Setup all GTFS tasks.'
   task :setup do
+    Rake::Task['gtfs:import_categories'].execute
     Rake::Task['gtfs:scrape'].execute
     Rake::Task['gtfs:create_clusters'].execute
+  end
+
+  desc 'Import all Categories of Transports'
+  task :import_categories do
+    categories = Set.new
+    CSV.foreach(GTFS_URL) do |row|
+      next unless row.size == 2
+
+      categories.add? row[0]&.upcase
+    end
+
+    unless categories.empty?
+      Application['database'].transaction do
+        new_categories = categories.reject do |name|
+          Models::Category.where(name:).first
+        end
+
+        multi_category = new_categories.map do |name|
+          Models::Category.new(name:)
+        end
+        
+        Models::Category.multi_insert(multi_category) unless multi_category.empty?
+      end
+    end
   end
 
   desc 'Scrap for new GTFS data and write if TRUE in DATABASE.'

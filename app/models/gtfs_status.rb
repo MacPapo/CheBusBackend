@@ -5,6 +5,7 @@ module Models
   class GtfsStatus < Sequel::Model
     plugin :timestamps, create: :created_at, update: :updated_at
 
-    many_to_one :agencies, key: :agency_id
+    many_to_one :agencies,   key: :agency_id
+    many_to_one :categories, key: :category
   end
 end

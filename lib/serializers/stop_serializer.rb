@@ -51,7 +51,7 @@ module Serializers
       {
         id: stop[:stop_id],
         code: stop[:stop_code],
-        name: stop[:stop_name],
+        name: stop[:name],
         desc: stop[:stop_desc],
         loc: stop[:stop_loc],
         zone_id: stop[:zone_id],
@@ -81,7 +81,7 @@ module Serializers
       # Formattazione di base
       {
         id: stop[:stop_id],
-        name: stop[:stop_name],
+        name: stop[:name],
         loc: stop[:stop_loc]
       }
     end
@@ -89,7 +89,7 @@ module Serializers
     def format_only_name(stop)
       # Formattazione di base
       {
-        name: stop[:stop_name]
+        name: stop[:name]
       }
     end
 

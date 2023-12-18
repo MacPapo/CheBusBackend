@@ -7,6 +7,7 @@ require_relative 'application'
 
 # Start GraphQL provider
 Application.start(:graphql)
+Application.start(:redis)
 
 
 # Completes the application setup by finalizing the registration of application

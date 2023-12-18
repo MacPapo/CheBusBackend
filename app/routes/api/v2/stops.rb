@@ -89,7 +89,7 @@ module Routes::API::V2::Stops
       to_date = from_date + (interval.to_i / 1440.0)
 
       query = Application['database'][:arrivals_departures]
-        .where(stop_name: stopname, t_departure: from_date..to_date)
+        .where(name: stopname, t_departure: from_date..to_date)
         .select(:trip_headsign, :service_id, :t_departure, :route_color, :route_text_color, :route_short_name, :trip_id)
         .limit(MAX_DEPARTURES)
         .to_a

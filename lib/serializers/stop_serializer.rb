@@ -80,9 +80,10 @@ module Serializers
     def format_stop(stop)
       # Formattazione di base
       {
-        id: stop[:stop_id],
-        name: stop[:name],
-        loc: stop[:stop_loc]
+        name: stop[0],
+        lat: stop[1],
+        lon: stop[2],
+        category: stop[3]
       }
     end
 

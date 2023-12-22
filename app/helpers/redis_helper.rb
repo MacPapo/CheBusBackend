@@ -1,15 +1,36 @@
 # frozen-string-literal: true
 
 module Helpers::RedisHelper
-  KEY = 'stops'
+  @geo_import_in_progress = false
+  @import_all_stops_in_progress = false
+  GEO_KEY = 'geo_stops'
+  ALL_KEY = 'stops'
 
-  def self.round_point(point)
-    point.to_f.round(5)
+  def self.geo_import_stops_if_needed(stops)
+    return if @geo_import_in_progress
+
+    @geo_import_in_progress = true
+    Thread.new do
+      begin
+        Application['redis'].pipelined do
+          stops.each do |stop|
+            self.geo_add_stop(stop)
+          end
+        end
+      ensure
+        @geo_import_in_progress = false
+      end
+    end
   end
 
-  def self.import_stops(stops)
-    Application['redis'].pipelined do
-      stops.each { |stop| self.geo_add_stop(stop) }
+  def self.import_all_stops_if_needed(stops)
+    return if @import_all_stops_in_progress
+
+    @import_all_stops_in_progress = true
+    Thread.new do
+      Application['redis'].set(ALL_KEY, stops)
+    ensure
+      @import_all_stops_in_progress = false
     end
   end
 
@@ -18,46 +39,34 @@ module Helpers::RedisHelper
     # stop[1] -> lat
     # stop[2] -> lon
     # stop[3] -> category
+    # stop[4] -> rating
     [stop[2], stop[1], stop[0]]
   end
-  
+
+  def self.calculate_rating(distance)
+    1.0 / distance.to_f
+  end
+
   def self.geo_add_stop(stop)
-    Application['redis'].geoadd(KEY, self.prepare_geo_stop(stop))
-    self.hash_set_stop(stop)
+    Application['redis'].geoadd(GEO_KEY, self.prepare_geo_stop(stop))
   end
 
-  def self.hash_set_stop(stop)
-    lon = self.round_point(stop[2])
-    lat = self.round_point(stop[1])
-    Application['redis'].hset("stop_info:#{lon}:#{lat}", { CATEGORY: stop[-1].to_s })
-  end
-  
-  def self.hash_get_stop(lon, lat)
-    lon = self.round_point(lon)
-    lat = self.round_point(lat)
-    Application['redis'].hget("stop_info:#{lon}:#{lat}", 'CATEGORY')
-  end
-
-    # Metodo per recuperare tutte le fermate con le loro categorie
-  def self.get_all_stops
-    central_lon = 12.0
-    central_lat = 45.0
-    radius = 20000000
-    unit = 'km'
-
-    options = ['WITHCOORD']
+  def self.geo_rating(point, radius_km = 1)
+    lon = point[1]
+    lat = point[0]
+    unit = 'km'.freeze
+    options = %w[WITHCOORD WITHDIST]
 
     # Chiamata a georadius
-    stops_data = Application['redis'].georadius([KEY, central_lon, central_lat, radius, unit], *options)
+    stops_data = Application['redis'].georadius([GEO_KEY, lon, lat, radius_km, unit], *options)
 
-    formatted_stops_data = stops_data.map do |stop|
-      name = stop[0]  # Nome della fermata
-      lon, lat = stop[1] # Coordinate [lon, lat]
+    return if stops_data.nil? || stops_data.empty?
 
-      category = self.hash_get_stop(lon, lat)
-      [name, self.round_point(lon), self.round_point(lat), category]
-    end
+    stops_data.map { |x| {name: x[0], lat: x[2][1], lon: x[2][0], rating: self.calculate_rating(x[1])} }
+  end
 
-    formatted_stops_data
+  def self.get_stops
+    cached_data = Application['redis'].get(ALL_KEY)
+    cached_data.nil? ? [] : Oj.load(cached_data)
   end
 end

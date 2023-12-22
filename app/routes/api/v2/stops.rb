@@ -4,6 +4,7 @@
 # Provides RESTful routes for accessing stop information and departures.
 module Routes::API::V2::Stops
   MAX_DEPARTURES = 50
+  USER_PARAMS = %w[latitude longitude].freeze
   DEPARTURES_PARAMS = %w[stopname datetime interval].freeze
 
   # Registers routes under the 'stops' namespace.
@@ -11,7 +12,9 @@ module Routes::API::V2::Stops
   def self.register(app)
     app.hash_branch(:v2, 'stops') do |r|
       r.is do
-        r.get { Routes::API::V2::Stops.handle_all_stops_request(r) }
+        r.get(params: USER_PARAMS) do |lat, lon|
+          Routes::API::V2::Stops.handle_all_stops_request(r, lat, lon)
+        end
       end
 
       r.on Integer do |stop_id|
@@ -51,21 +54,35 @@ module Routes::API::V2::Stops
   # Handles requests for all bus stops.
   # @param _r [Roda::RodaRequest] The Roda request object.
   # @return [String] Serialized JSON response containing all stops.
-  def self.handle_all_stops_request(_r)
-    cluster = Helpers::RedisHelper.get_all_stops
+  def self.handle_all_stops_request(r, lat, lon)
+    data = Helpers::RedisHelper.get_stops
+    
+    res = nil
+    if data.empty?
+      stops = Models::Stop.give_all_stops_no_cluster
+      cluster = Models::StopCluster.give_all_stops_cluster
 
-    p cluster.empty?
-    p cluster.nil?
-    p cluster.size
+      data = (stops + cluster).map { |x| [x[0], x[1], x[2], x[3], 0] }
+      res = Serializers::StopSerializer.new(data)
+      Helpers::RedisHelper.geo_import_stops_if_needed(data)
+      Helpers::RedisHelper.import_all_stops_if_needed(res.render)
+      res = res.to_json
+    else
+      unless lat.empty? || lon.empty?
+        ratings = Helpers::RedisHelper.geo_rating([lat.to_f, lon.to_f])
 
-    if cluster.empty?
-      cluster = Models::Stop.give_all_stops_no_cluster
-      cluster += Models::StopCluster.give_all_stops_cluster
+        unless ratings.empty?
+          ratings.each do |rating|
+            change = data.find { |stop| stop['name'] == rating[:name]}
+            change['rating'] = rating[:rating]
+          end
+        end
+      end
 
-      Helpers::RedisHelper.import_stops(cluster)
+      res = data
     end
 
-    APIResponse.success(_r.response, Serializers::StopSerializer.new(cluster).to_json)
+    APIResponse.success(r.response, res)
   end
 
   # Handles requests for a specific bus stop by its ID.

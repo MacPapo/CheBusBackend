@@ -83,7 +83,8 @@ module Serializers
         name: stop[0],
         lat: stop[1],
         lon: stop[2],
-        category: stop[3]
+        category: stop[3],
+        rating: stop[4]
       }
     end
 

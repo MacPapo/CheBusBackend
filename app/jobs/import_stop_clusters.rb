@@ -36,8 +36,8 @@ module Jobs
     def self.import_duplicated_stops
       duplicated_stops = []
       CSV.foreach(FILE_DUPLICATED_STOPS_NAME, headers: true) do |row|
-        stop_name = row['stop_name']
-        duplicated_stops << { stop_name: }
+        stop_id = row['stop_id']
+        duplicated_stops << { stop_id: }
       end
 
       duplicated_stops
@@ -78,8 +78,7 @@ module Jobs
 
       duplicated_stops = import_duplicated_stops
       duplicated_stops.each do |duplicated_stop|
-        clusters.first[1].reject! { |stop| stop[:stop_name] == duplicated_stop[:stop_name] }
-        stops_data.reject! {  |stop| stop[:stop_name] == duplicated_stop[:stop_name] }
+        clusters.first[1].reject! { |stop| stop[:stop_id] == duplicated_stop[:stop_id] }
       end
 
       # Creazione degli oggetti StopCluster

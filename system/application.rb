@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'bundler/setup'
+require 'active_support'
+require 'active_support/core_ext'
 require 'dry/system'
 
 # The Application class is a container for registering and managing dependencies

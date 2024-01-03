@@ -16,12 +16,16 @@ query(
   GRAPHQL
 
   DeparturesByStop = Application['graphql'].parse <<-'GRAPHQL'
-query ($ids: [String!], $interval: Int!, $startTime: Long!) {
+query (
+    $ids: [String],
+    $start_time: Long,
+    $interval: Int
+) {
   stops(ids: $ids) {
     id
     name
     gtfsId
-    stoptimesForPatterns(timeRange: $interval, startTime: $startTime) {
+    stoptimesForPatterns(timeRange: $interval, startTime: $start_time) {
       stoptimes {
         scheduledArrival
         trip {
@@ -51,12 +55,12 @@ query ($ids: [String!], $interval: Int!, $startTime: Long!) {
   GRAPHQL
 
   StopTimesByDeparture = Application['graphql'].parse <<-'GRAPHQL'
-query ($id: String!, $interval: Int!, $startTime: Long!, $serviceDate: String!) {
+query ($id: String!, $interval: Int!, $start_time: Long!, $service_date: String!) {
   stops(id: $id) {
     id
     gtfsId
     name
-    stoptimesForPatterns(timeRange: $interval, startTime: $startTime) {
+    stoptimesForPatterns(timeRange: $interval, startTime: $start_time) {
       stoptimes {
         scheduledArrival
         trip {
@@ -70,7 +74,7 @@ query ($id: String!, $interval: Int!, $startTime: Long!, $serviceDate: String!) 
             longName
             mode
           }
-          stoptimesForDate(serviceDate: $serviceDate) {
+          stoptimesForDate(serviceDate: $service_date) {
             stopPosition
             scheduledArrival
             stop {

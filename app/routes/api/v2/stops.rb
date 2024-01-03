@@ -107,16 +107,34 @@ module Routes::API::V2::Stops
   # @param datetime [String] The starting datetime for departures.
   # @param interval [String] The time interval in minutes.
   # @return [String] Serialized JSON response of departures.
-  def self.handle_departures_request(_r, stopname, datetime, interval)
+  def self.handle_departures_request(r, stopname, datetime, interval)
     contract = Validations::StopsValidation::StopContract.new
     validation_result = contract.call(stopname:, datetime:, interval:)
 
     if validation_result.success?
-      timestamp = datetime.to_time.to_i
+      unix_timestamp = datetime.to_time.to_i
+      interval_in_sec = interval.to_i.minutes.in_seconds
+      ids = ["1:6015"]
+      vars = {
+          ids: ids,
+          interval: interval_in_sec,
+          start_time: unix_timestamp,
+        }
+      p vars
 
-      APIResponse.success(_r.response, Serializers::StopSerializer.new(query.sort_by { |departure| departure[:t_departure] }, view: :departures).to_json)
+      res = Application['graphql'].query(
+        Graphql::StopsQueries::DeparturesByStop,
+        variables: {
+          ids: ids,
+          interval: interval_in_sec,
+          start_time: unix_timestamp,
+        }
+      )
+
+      p res
+      # APIResponse.success(r.response, Serializers::StopSerializer.new(query.sort_by { |departure| departure[:t_departure] }, view: :departures).to_json)
     else
-      APIResponse.error(_r.response, validation_result.errors.to_h, 400)
+      APIResponse.error(r.response, validation_result.errors.to_h, 400)
     end
   end
 end

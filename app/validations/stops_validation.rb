@@ -14,14 +14,12 @@ module Validations::StopsValidation
     # Ensures that the datetime is valid, from the current year, and not in the past.
     rule(:datetime) do
       if (parsed_date = begin
-                          DateTime.iso8601(value)
+                          value.to_time
                         rescue StandardError
                           false
                         end)
-        current_date = DateTime.now - 1.hour
-        date_interval = current_date + 3.months
-        key.failure('must be a date within the next 3 months') unless parsed_date <= date_interval
-        key.failure('must not be before today') if parsed_date < current_date
+        current_date = Date.today
+        key.failure('must be a date within today and the next month') unless parsed_date.between?(current_date, 1.months.from_now)
       else
         key.failure('must be a valid datetime')
       end

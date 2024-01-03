@@ -34,8 +34,7 @@ gem 'dry-system'
 
 gem 'dry-validation'
 
-# A gem providing "time travel" and "time freezing" capabilities
-gem 'timecop'
+gem 'activesupport'
 
 gem 'gtfs'
 

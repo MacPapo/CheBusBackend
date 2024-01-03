@@ -18,9 +18,10 @@ module Validations::StopsValidation
                         rescue StandardError
                           false
                         end)
-        current_year = DateTime.now.year
-        key.failure('must be a date from the current year') unless parsed_date.year == current_year
-        key.failure('must not be before today') if parsed_date < DateTime.now
+        current_date = DateTime.now - 1.hour
+        date_interval = current_date + 3.months
+        key.failure('must be a date within the next 3 months') unless parsed_date <= date_interval
+        key.failure('must not be before today') if parsed_date < current_date
       else
         key.failure('must be a valid datetime')
       end
@@ -35,7 +36,7 @@ module Validations::StopsValidation
     # Custom validation rule for 'stopname'.
     # Ensures that the stop name matches a specific format.
     rule(:stopname) do
-      regex = /^[A-Za-z0-9' ]+(?:\s+[A-Za-z0-9' ]+)*$/
+      regex = /^[A-Za-z0-9'. ]+(?:\s+[A-Za-z0-9'. ]+)*$/
       key.failure('must be a valid stop name format') unless value.match?(regex)
     end
   end

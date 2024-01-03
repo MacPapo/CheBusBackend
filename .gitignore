@@ -65,3 +65,4 @@ build-iPhoneSimulator/
 *.DS_Store
 /stop_clusters.txt
 /*.rdb
+/.idea/

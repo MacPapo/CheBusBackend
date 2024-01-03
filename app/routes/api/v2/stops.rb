@@ -112,14 +112,7 @@ module Routes::API::V2::Stops
     validation_result = contract.call(stopname:, datetime:, interval:)
 
     if validation_result.success?
-      from_date = DateTime.parse(datetime)
-      to_date = from_date + (interval.to_i / 1440.0)
-
-      query = Application['database'][:arrivals_departures]
-        .where(name: stopname, t_departure: from_date..to_date)
-        .select(:trip_headsign, :service_id, :t_departure, :route_color, :route_text_color, :route_short_name, :trip_id)
-        .limit(MAX_DEPARTURES)
-        .to_a
+      timestamp = datetime.to_time.to_i
 
       APIResponse.success(_r.response, Serializers::StopSerializer.new(query.sort_by { |departure| departure[:t_departure] }, view: :departures).to_json)
     else

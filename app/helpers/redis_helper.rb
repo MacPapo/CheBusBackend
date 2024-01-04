@@ -1,4 +1,4 @@
-# frozen-string-literal: true
+# frozen_string_literal: true
 
 module Helpers::RedisHelper
   @geo_import_in_progress = false

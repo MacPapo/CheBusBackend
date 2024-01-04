@@ -36,7 +36,7 @@ module Routes::API::V2::Stops
               flon: 12.36083,
               tlat: 45.42902,
               tlon: 12.35616,
-              date: '2023-12-14',
+              date: '2024-01-04',
               time: '17:20',
               search_window: 3600
             }
@@ -44,7 +44,7 @@ module Routes::API::V2::Stops
 
           APIResponse.success(
             r.response,
-            Serializers::PlanSerializer.new(res.data.plan.itineraries).to_json
+            Serializers::PlanSerializer.new(res['data']['plan']['itineraries']).to_json
           )
         end
       end
@@ -114,27 +114,43 @@ module Routes::API::V2::Stops
     if validation_result.success?
       unix_timestamp = datetime.to_time.to_i
       interval_in_sec = interval.to_i.minutes.in_seconds
-      ids = ["1:6015"]
-      vars = {
-          ids: ids,
-          interval: interval_in_sec,
-          start_time: unix_timestamp,
-        }
-      p vars
+      a_id = self.handle_agency_query(stopname)
+      c_id = Models::StopCluster.search_in_cluster_by_name(stopname)
 
+      if c_id.nil?
+        s_id = Models::Stop.search_stop_by_name(stopname)
+        return APIResponse.error(r.response, 'diocan', 400) if s_id.nil?
+
+        s_id = "#{a_id}:#{s_id}"
+      else
+        s_id = Models::Stop.search_stops_by_cid(c_id)
+        s_id.map! { |x| "#{a_id}:#{x}" }
+      end
+
+      p s_id
       res = Application['graphql'].query(
         Graphql::StopsQueries::DeparturesByStop,
         variables: {
-          ids: ids,
+          ids: s_id,
           interval: interval_in_sec,
           start_time: unix_timestamp,
         }
       )
 
-      p res
-      # APIResponse.success(r.response, Serializers::StopSerializer.new(query.sort_by { |departure| departure[:t_departure] }, view: :departures).to_json)
+      APIResponse.success(r.response, Serializers::StopSerializer.new(res['data']['stops'], view: :departures).to_json)
     else
       APIResponse.error(r.response, validation_result.errors.to_h, 400)
     end
+  end
+
+  def self.handle_agency_query(name)
+    res = Application['graphql'].query(
+      Graphql::StopsQueries::AgencyIdByStop,
+      variables: {
+        stop_name: name
+      }
+    )['data']['stops']
+
+    res[0]['routes'][0]['agency']['gtfsId'].split(':').first
   end
 end

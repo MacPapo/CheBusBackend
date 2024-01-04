@@ -63,17 +63,12 @@ module Serializers
       }
     end
 
-    # Formatta una singola fermata.
+    # Format Departure QUERY.
     def format_departure_stop(departure)
       # Formattazione di base
       {
-        headsign: departure[:trip_headsign],
-        sid: departure[:service_id],
-        tid: departure[:trip_id],
-        departure_time: departure[:t_departure],
-        background_color: departure[:route_color],
-        text_color: departure[:route_text_color],
-        line_number: departure[:route_short_name]
+        name: departure['name'],
+        stops: format_stoptimes_patterns(departure['stoptimesForPatterns'])
       }
     end
 
@@ -92,6 +87,46 @@ module Serializers
       # Formattazione di base
       {
         name: stop[:name]
+      }
+    end
+
+    def format_stoptimes_patterns(spatterns)
+      spatterns.map do |pattern|
+        pattern['stoptimes'].map do |stime|
+          {
+            t_arrival: Helpers::TimeHelper.sec_til_mid(stime['scheduledArrival']),
+            trip: format_trip(stime['trip'])
+          }
+        end
+      end
+    end
+
+    def format_trip(trip)
+      {
+        headsign: trip['tripHeadsign'],
+        route: format_route(trip['route']),
+        arrival_stop_time: format_arrival_stop_time(trip['arrivalStoptime'])
+      }
+    end
+
+    def format_route(route)
+      {
+        short_name: route['shortName'],
+        long_name: route['longName'],
+        mode: route['mode']
+      }
+    end
+
+    def format_arrival_stop_time(arrival_stoptime)
+      {
+        scheduled_arrival: Helpers::TimeHelper.sec_til_mid(arrival_stoptime['scheduledArrival']),
+        stop: format_single_stop(arrival_stoptime['stop'])
+      }
+    end
+
+    def format_single_stop(stop)
+      {
+        name: stop['name']
       }
     end
 

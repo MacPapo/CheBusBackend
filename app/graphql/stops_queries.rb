@@ -1,7 +1,7 @@
 # frozen-string-literal: true
 
 module Graphql::StopsQueries
-  AgencyIdByStop = Application['graphql'].parse <<-'GRAPHQL'
+  AgencyIdByStop = <<-'GRAPHQL'
 query(
     $stop_name: String!
 ) {
@@ -15,7 +15,7 @@ query(
 }
   GRAPHQL
 
-  DeparturesByStop = Application['graphql'].parse <<-'GRAPHQL'
+  DeparturesByStop = <<-'GRAPHQL'
 query (
     $ids: [String],
     $start_time: Long,
@@ -54,8 +54,13 @@ query (
 }
   GRAPHQL
 
-  StopTimesByDeparture = Application['graphql'].parse <<-'GRAPHQL'
-query ($id: String!, $interval: Int!, $start_time: Long!, $service_date: String!) {
+  StopTimesByDeparture = <<-'GRAPHQL'
+query (
+    $id: String!,
+    $interval: Int!,
+    $start_time: Long!,
+    $service_date: String!
+) {
   stops(id: $id) {
     id
     gtfsId
@@ -90,8 +95,10 @@ query ($id: String!, $interval: Int!, $start_time: Long!, $service_date: String!
 }
   GRAPHQL
 
-  GeometryByTrip = Application['graphql'].parse <<-'GRAPHQL'
-query ($id: String!) {
+  GeometryByTrip = <<-'GRAPHQL'
+query (
+    $id: String!
+) {
   trip(id: $id) {
     id
     tripHeadsign

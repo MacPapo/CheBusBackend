@@ -16,8 +16,6 @@ gem 'sequel', '>= 5.41'
 # SQLite support
 gem 'sqlite3'
 
-gem 'graphql-client', github: 'rmosolgo/graphql-client', ref: '27ef61f'
-
 # YARD is a Ruby Documentation tool
 gem 'yard'
 

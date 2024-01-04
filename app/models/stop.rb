@@ -12,10 +12,28 @@ module Models
           .where(cluster_id: nil)
           .select_map([Sequel[:stops][:name], :lat, :lon, Sequel[:categories][:name].as(:category)])
       end
+
+      def search_by_name_no_cluster(s_name)
+        where(name: s_name, cluster_id: nil)
+          .select_map(:stop_id)
+      end
+
+      def search_stops_by_cluster_id(cid)
+        where(cluster_id: cid)
+          .select_map(:stop_id)
+      end
     end
 
     def self.give_all_stops_no_cluster
       all_stops_no_cluster
+    end
+
+    def self.search_stop_by_name(name)
+      search_by_name_no_cluster(name).first
+    end
+
+    def self.search_stops_by_cid(cid)
+      search_stops_by_cluster_id(cid).to_a
     end
   end
 end

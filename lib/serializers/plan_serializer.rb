@@ -13,15 +13,11 @@ module Serializers
       format_plans { |itinerary| format_itinerary(itinerary) }
     end
 
-    def format_time(time)
-      Time.at(time / 1000).strftime('%FT%H:%M:%S')
-    end
-
     def format_itinerary(itinerary)
       {
-        start_time: format_time(itinerary.start_time),
-        end_time: format_time(itinerary.end_time),
-        legs: legs(itinerary.legs)
+        start_time: Helpers::TimeHelper.unix_converter(itinerary['startTime']),
+        end_time: Helpers::TimeHelper.unix_converter(itinerary['endTime']),
+        legs: legs(itinerary['legs'])
       }
     end
 
@@ -31,13 +27,13 @@ module Serializers
 
     def format_leg(leg)
       {
-        mode: leg.mode,
-        start_time: format_time(leg.start_time),
-        end_time: format_time(leg.end_time),
-        from: format_location(leg.from),
-        to: format_location(leg.to),
-        route: format_route(leg.route),
-        legGeometry: format_leg_geometry(leg.leg_geometry)
+        mode: leg['mode'],
+        start_time: Helpers::TimeHelper.unix_converter(leg['startTime']),
+        end_time: Helpers::TimeHelper.unix_converter(leg['endTime']),
+        from: format_location(leg['from']),
+        to: format_location(leg['to']),
+        route: format_route(leg['route']),
+        legGeometry: format_leg_geometry(leg['legGeometry'])
       }
     end
 
@@ -51,17 +47,17 @@ module Serializers
 
     def format_location(loc)
       {
-        name: loc.name,
-        latitude: loc.lat,
-        longitude: loc.lon,
-        departure_time: format_time(loc.departure_time),
-        arrival_time: format_time(loc.arrival_time)
+        name: loc['name'],
+        latitude: loc['lat'],
+        longitude: loc['lon'],
+        departure_time: Helpers::TimeHelper.unix_converter(loc['departureTime']),
+        arrival_time: Helpers::TimeHelper.unix_converter(loc['arrivalTime'])
       }
     end
 
     def format_leg_geometry(geo)
       {
-        points: geo.points
+        points: geo['points']
       }
     end
 
@@ -69,9 +65,9 @@ module Serializers
       return nil if route.nil?
 
       {
-        gtfs_id: route.gtfs_id,
-        long_name: route.long_name,
-        short_name: route.short_name
+        gtfs_id: route['gtfs_id'],
+        long_name: route['longName'],
+        short_name: route['shortName']
       }
     end
 

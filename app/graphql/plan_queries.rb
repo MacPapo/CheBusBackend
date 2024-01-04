@@ -1,7 +1,7 @@
 # frozen-string-literal: true
 
 module Graphql::PlanQueries
-  Plan = Application['graphql'].parse <<-'GRAPHQL'
+  Plan = <<-'GRAPHQL'
 query(
     $flat: Float!,
     $flon: Float!,

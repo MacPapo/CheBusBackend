@@ -112,18 +112,19 @@ module Routes::API::V2::Stops
     validation_result = contract.call(stopname:, datetime:, interval:)
 
     if validation_result.success?
-      unix_timestamp = datetime.to_time.to_i
-      interval_in_sec = interval.to_i.minutes.in_seconds
+      unix_timestamp = Helpers::TimeHelper.from_date_to_unix_str(datetime)
+      interval_in_sec = Helpers::TimeHelper.min_in_sec(interval)
+
       a_id = self.handle_agency_query(stopname)
-      c_id = Models::StopCluster.search_in_cluster_by_name(stopname)
+      c_id = Models::StopCluster.search_id_in_cluster_by_name(stopname)
 
       if c_id.nil?
-        s_id = Models::Stop.search_stop_by_name(stopname)
+        s_id = Models::Stop.search_stop_id_by_name(stopname)
         return APIResponse.error(r.response, 'The stop name provided is incorrect!', 400) if s_id.nil?
 
         s_id = "#{a_id}:#{s_id}"
       else
-        s_id = Models::Stop.search_stops_by_cid(c_id)
+        s_id = Models::Stop.search_stops_id_by_cid(c_id)
         s_id.map! { |x| "#{a_id}:#{x}" }
       end
 

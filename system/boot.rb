@@ -3,6 +3,8 @@
 # This file is responsible for finalizing the application setup. It completes the
 # automatic registration of application classes and external dependencies.
 
+require 'active_support'
+require 'active_support/core_ext/numeric/time'
 require_relative 'application'
 
 # Start GraphQL provider

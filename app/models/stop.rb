@@ -18,9 +18,14 @@ module Models
           .select_map(:stop_id)
       end
 
-      def search_stops_by_cluster_id(cid)
+      def search_stops_id_by_cluster_id(cid)
         where(cluster_id: cid)
           .select_map(:stop_id)
+      end
+
+      def search_location_by_name(s_name)
+        where(name: s_name)
+          .select_map(%i[lat lon])
       end
     end
 
@@ -28,12 +33,16 @@ module Models
       all_stops_no_cluster
     end
 
-    def self.search_stop_by_name(name)
+    def self.search_stop_id_by_name(name)
       search_by_name_no_cluster(name).first
     end
 
-    def self.search_stops_by_cid(cid)
-      search_stops_by_cluster_id(cid).to_a
+    def self.search_stops_id_by_cid(cid)
+      search_stops_id_by_cluster_id(cid).to_a
+    end
+
+    def self.search_location_in_stops_by_name(name)
+      search_location_by_name(name).first
     end
   end
 end

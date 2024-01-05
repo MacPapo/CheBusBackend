@@ -3,7 +3,7 @@
 # This module defines routes for the V2 API namespace related to routing information.
 module Routes::API::V2::Routes
   # Constants defining the required parameters for the route endpoint.
-  ROUTE_PARAMS = %w[from_stop_name to_stop_name datetime interval].freeze
+  ROUTE_PARAMS = %w[from_stop_name to_stop_name datetime interval is_arrival_time].freeze
 
   # Registers routes under the '/v2/routes' path.
   # @param app [Roda] The main application instance.
@@ -15,11 +15,11 @@ module Routes::API::V2::Routes
       # @param to [String] The name of the arrival stop.
       # @param datetime [String] The starting date and time.
       # @param interval [String] The time interval in minutes.
-      r.get(params!: ROUTE_PARAMS) do |from, to, datetime, interval|
-        validation_result = Routes::API::V2::Routes.validate_params(from, to, datetime, interval)
+      r.get(params!: ROUTE_PARAMS) do |from, to, datetime, interval, is_arrival_time|
+        validation_result = Routes::API::V2::Routes.validate_params(from, to, datetime, interval, is_arrival_time)
 
         if validation_result.success?
-          Routes::API::V2::Routes.handle_routes_request(response, from, to, datetime, interval)
+          Routes::API::V2::Routes.handle_routes_request(response, from, to, datetime, interval, is_arrival_time)
         else
           APIResponse.error(response, validation_result.errors.to_h, 400)
         end
@@ -33,12 +33,12 @@ module Routes::API::V2::Routes
   # @param datetime [String] The specified datetime.
   # @param interval [String] The time interval in minutes.
   # @return [Dry::Validation::Result] The result of the validation.
-  def self.validate_params(from_stop_name, to_stop_name, datetime, interval)
+  def self.validate_params(from_stop_name, to_stop_name, datetime, interval, is_arrival_time)
     contract = Validations::RoutesValidation::RouteContract.new
-    contract.call(from_stop_name:, to_stop_name:, datetime:, interval:)
+    contract.call(from_stop_name:, to_stop_name:, datetime:, interval:, is_arrival_time:)
   end
 
-  def self.handle_routes_request(response, from_stop_name, to_stop_name, datetime, interval)
+  def self.handle_routes_request(response, from_stop_name, to_stop_name, datetime, interval, is_arrival_time)
     date, time = Helpers::TimeHelper.split_date_and_time(datetime)
     interval_sec = Helpers::TimeHelper.min_in_sec(interval)
 
@@ -58,7 +58,8 @@ module Routes::API::V2::Routes
         tlon: to_lon,
         date:,
         time:,
-        search_window: interval_sec
+        search_window: interval_sec,
+        is_arrival_time:
       }
     )['data']['plan']
 

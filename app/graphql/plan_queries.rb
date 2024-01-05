@@ -10,10 +10,12 @@ query(
     $search_window: Long!,
     $date: String!,
     $time: String!,
+    $is_arrival_time: Boolean
 ) {
     plan(
         from: { lat: $flat, lon: $flon }
         to: { lat: $tlat, lon: $tlon }
+        arriveBy: $is_arrival_time
         date: $date
         time: $time
         searchWindow: $search_window

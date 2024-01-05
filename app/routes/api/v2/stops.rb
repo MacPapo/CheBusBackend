@@ -17,35 +17,9 @@ module Routes::API::V2::Stops
         end
       end
 
-      r.on Integer do |stop_id|
-        r.get { Routes::API::V2::Stops.handle_specific_stop_request(r, stop_id) }
-      end
-
       r.on 'departures' do
         r.get(params!: DEPARTURES_PARAMS) do |stopname, datetime, interval|
           Routes::API::V2::Stops.handle_departures_request(r, stopname, datetime, interval)
-        end
-      end
-
-      r.on 'graphql' do
-        r.get do
-          res = Application['graphql'].query(
-            Graphql::PlanQueries::Plan,
-            variables: {
-              flat: 45.42551,
-              flon: 12.36083,
-              tlat: 45.42902,
-              tlon: 12.35616,
-              date: '2024-01-04',
-              time: '17:20',
-              search_window: 3600
-            }
-          )
-
-          APIResponse.success(
-            r.response,
-            Serializers::PlanSerializer.new(res['data']['plan']['itineraries']).to_json
-          )
         end
       end
     end
@@ -83,22 +57,6 @@ module Routes::API::V2::Stops
     end
 
     APIResponse.success(r.response, res)
-  end
-
-  # Handles requests for a specific bus stop by its ID.
-  # @param _r [Roda::RodaRequest] The Roda request object.
-  # @param stop_id [Integer] The ID of the stop.
-  # @return [String] Serialized JSON response of the specific stop.
-  def self.handle_specific_stop_request(_r, stop_id)
-    query = Application['database'][:stops]
-      .where(stop_id: stop_id.to_s)
-      .first
-
-    if query
-      APIResponse.success(_r.response, Serializers::StopSerializer.new(query, view: :detailed).to_json)
-    else
-      APIResponse.error(_r.response, 'Stop not found', 404)
-    end
   end
 
   # Handles requests for departures from a specific stop within a given time interval.

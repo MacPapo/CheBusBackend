@@ -29,29 +29,11 @@ module Routes::API::V2::Stops
           Routes::API::V2::Stops.handle_trips_request(r, trip_id, datetime)
         end
       end
-
-      r.on 'graphql' do
-        r.get do
-          res = Application['graphql'].query(
-            Graphql::PlanQueries::Plan,
-            variables: {
-              flat: 45.42551,
-              flon: 12.36083,
-              tlat: 45.42902,
-              tlon: 12.35616,
-              date: '2024-01-04',
-              time: '17:20',
-              search_window: 3600
-            }
-          )
-
-          APIResponse.success(
-            r.response,
-            Serializers::PlanSerializer.new(res['data']['plan']['itineraries']).to_json
-          )
-        end
-      end
     end
+  end
+
+  def self.valid_location?(lat, lon)
+    !(lat.empty? || lon.empty?) && !(lat.to_f.zero? || lon.to_f.zero?)
   end
 
   # Handles requests for all bus stops.
@@ -59,7 +41,7 @@ module Routes::API::V2::Stops
   # @return [String] Serialized JSON response containing all stops.
   def self.handle_all_stops_request(r, lat, lon)
     data = Helpers::RedisHelper.get_stops
-    
+
     res = nil
     if data.empty?
       stops = Models::Stop.give_all_stops_no_cluster
@@ -71,7 +53,7 @@ module Routes::API::V2::Stops
       Helpers::RedisHelper.import_all_stops_if_needed(res.render)
       res = res.to_json
     else
-      unless lat.empty? || lon.empty?
+      if valid_location?(lat, lon)
         ratings = Helpers::RedisHelper.geo_rating([lat.to_f, lon.to_f])
 
         unless ratings.empty?
@@ -135,16 +117,15 @@ module Routes::API::V2::Stops
     validation_result = contract.call(trip_id:, datetime:)
 
     if validation_result.success?
-
       res = Application['graphql'].query(
         Graphql::StopsQueries::StopTimesByTrip,
         variables: {
-          trip_id: trip_id,
+          trip_id:,
           service_date: Helpers::TimeHelper.format_service_date(datetime)
         }
       )
 
-      APIResponse.success(r.response, "Successfull")
+      APIResponse.success(r.response, Serializers::StopSerializer.new(res['data']['trip'], view: :trips).to_json)
     else
       APIResponse.error(r.response, validation_result.errors.to_h, 400)
     end

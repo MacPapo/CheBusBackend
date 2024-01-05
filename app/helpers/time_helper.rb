@@ -18,7 +18,6 @@ module Helpers::TimeHelper
     arrival_time.strftime('%FT%H:%M:%S')
   end
 
-
   def self.split_date_and_time(datetime_str)
     date, time = datetime_str.split('T')
     [date, time]

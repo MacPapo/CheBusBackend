@@ -13,31 +13,27 @@ module Serializers
     # Metodo principale per serializzare l'output.
     def to_json(*_args)
       case @opts[:view]
-      when :detailed
-        detailed_stops
-      when :stop_only_name
-        stops_only_name
+      when :stops
+        all_stops
+      when :trips
+        trips_stops
       when :departures
         departures_stops
       else
-        default_stops
+        all_stops
       end
     end
 
     private
 
     # Serializzazione di default.
-    def default_stops
+    def all_stops
       format_stops { |stop| format_stop(stop) }
     end
 
-    def stops_only_name
-      format_stops { |stop| format_only_name(stop) }
-    end
-
     # Restituisce le fermate con tutti i dettagli.
-    def detailed_stops
-      format_stops { |stop| format_full_stop(stop) }
+    def trips_stops
+      format_stops { |stop| format_trips_stop(stop) }
     end
 
     # Restituisce le fermate con tutti i dettagli.
@@ -46,20 +42,12 @@ module Serializers
     end
 
     # Formatta una singola fermata.
-    def format_full_stop(stop)
+    def format_trips_stop(stop)
       # Formattazione di base
       {
-        id: stop[:stop_id],
-        code: stop[:stop_code],
-        name: stop[:name],
-        desc: stop[:stop_desc],
-        loc: stop[:stop_loc],
-        zone_id: stop[:zone_id],
-        url: stop[:stop_url],
-        location_type: stop[:location_type],
-        parent_station: stop[:parent_station],
-        timezone: stop[:stop_timezone],
-        wheelchair_boarding: stop[:wheelchair_boarding]
+        headsign: stop['tripHeadsign'],
+        active_dates: stop['activeDates'],
+        stops: format_trip_stoptimes(stop['stoptimesForDate'])
       }
     end
 
@@ -73,6 +61,15 @@ module Serializers
       }
     end
 
+    def format_trip_stoptimes(stoptimes)
+      stoptimes.map do |stoptime|
+        {
+          t_arrival: Helpers::TimeHelper.sec_til_mid(stoptime['scheduledArrival']),
+          stop: format_only_stop_name(stoptime['stop'])
+        }
+      end
+    end
+
     def format_stop(stop)
       # Formattazione di base
       {
@@ -84,10 +81,10 @@ module Serializers
       }
     end
 
-    def format_only_name(stop)
+    def format_only_stop_name(stop)
       # Formattazione di base
       {
-        name: stop[:name]
+        name: stop['name']
       }
     end
 

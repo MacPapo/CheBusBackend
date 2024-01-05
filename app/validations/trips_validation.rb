@@ -19,13 +19,12 @@ module Validations::TripsValidation
     # Ensures that the datetime is valid, from the current year, and not in the past.
     rule(:datetime) do
       if (parsed_date = begin
-                          DateTime.iso8601(value)
+                          value.to_time
                         rescue StandardError
                           false
                         end)
-        current_year = DateTime.now.year
-        key.failure('must be a date from the current year') unless parsed_date.year == current_year
-        key.failure('must not be before today') if parsed_date < DateTime.now
+        current_date = Date.today
+        key.failure('must be a date from the current year') unless parsed_date.between?(current_date, 1.months.from_now)
       else
         key.failure('must be a valid datetime')
       end

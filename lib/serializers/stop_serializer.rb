@@ -67,6 +67,7 @@ module Serializers
     def format_departure_stop(departure)
       # Formattazione di base
       {
+        id: departure['gtfsId'],
         name: departure['name'],
         stops: format_stoptimes_patterns(departure['stoptimesForPatterns'])
       }
@@ -103,6 +104,7 @@ module Serializers
 
     def format_trip(trip)
       {
+        id: trip['gtfsId'],
         headsign: trip['tripHeadsign'],
         route: format_route(trip['route']),
         arrival_stop_time: format_arrival_stop_time(trip['arrivalStoptime'])
@@ -111,6 +113,7 @@ module Serializers
 
     def format_route(route)
       {
+        id: route['id'],
         short_name: route['shortName'],
         long_name: route['longName'],
         mode: route['mode']

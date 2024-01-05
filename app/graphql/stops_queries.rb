@@ -30,6 +30,7 @@ query (
         scheduledArrival
         trip {
           id
+          gtfsId
           tripHeadsign
           activeDates
           route {
@@ -44,7 +45,6 @@ query (
             stop {
               id
               name
-              desc
             }
           }
         }
@@ -54,41 +54,21 @@ query (
 }
   GRAPHQL
 
-  StopTimesByDeparture = <<-'GRAPHQL'
+  StopTimesByTrip = <<-'GRAPHQL'
 query (
-    $id: String!,
-    $interval: Int!,
-    $start_time: Long!,
+    $trip_id: String!,
     $service_date: String!
 ) {
-  stops(id: $id) {
-    id
+  trip(id: $trip_id) {
     gtfsId
-    name
-    stoptimesForPatterns(timeRange: $interval, startTime: $start_time) {
-      stoptimes {
-        scheduledArrival
-        trip {
-          id
-          gtfsId
-          tripHeadsign
-          activeDates
-          route {
-            id
-            shortName
-            longName
-            mode
-          }
-          stoptimesForDate(serviceDate: $service_date) {
-            stopPosition
-            scheduledArrival
-            stop {
-              id
-              name
-              desc
-            }
-          }
-        }
+    tripHeadsign
+    activeDates
+    stoptimesForDate(serviceDate: $service_date) {
+      stopPosition
+      scheduledArrival
+      stop {
+        gtfsId
+        name
       }
     }
   }

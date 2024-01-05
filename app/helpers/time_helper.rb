@@ -18,8 +18,14 @@ module Helpers::TimeHelper
     arrival_time.strftime('%FT%H:%M:%S')
   end
 
+
   def self.split_date_and_time(datetime_str)
     date, time = datetime_str.split('T')
     [date, time]
+  end
+
+  def self.format_service_date(datetime)
+    service_date = datetime.to_datetime
+    service_date.strftime('%Y%m%d')
   end
 end

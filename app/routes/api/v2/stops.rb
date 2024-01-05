@@ -6,6 +6,7 @@ module Routes::API::V2::Stops
   MAX_DEPARTURES = 50
   USER_PARAMS = %w[latitude longitude].freeze
   DEPARTURES_PARAMS = %w[stopname datetime interval].freeze
+  TRIPS_PARAMS = %w[trip_id datetime].freeze
 
   # Registers routes under the 'stops' namespace.
   # @param app [Roda] The Roda application to which the routes are registered.
@@ -20,6 +21,34 @@ module Routes::API::V2::Stops
       r.on 'departures' do
         r.get(params!: DEPARTURES_PARAMS) do |stopname, datetime, interval|
           Routes::API::V2::Stops.handle_departures_request(r, stopname, datetime, interval)
+        end
+      end
+
+      r.on 'trips' do
+        r.get(params!: TRIPS_PARAMS) do |trip_id, datetime|
+          Routes::API::V2::Stops.handle_trips_request(r, trip_id, datetime)
+        end
+      end
+
+      r.on 'graphql' do
+        r.get do
+          res = Application['graphql'].query(
+            Graphql::PlanQueries::Plan,
+            variables: {
+              flat: 45.42551,
+              flon: 12.36083,
+              tlat: 45.42902,
+              tlon: 12.35616,
+              date: '2024-01-04',
+              time: '17:20',
+              search_window: 3600
+            }
+          )
+
+          APIResponse.success(
+            r.response,
+            Serializers::PlanSerializer.new(res['data']['plan']['itineraries']).to_json
+          )
         end
       end
     end
@@ -96,6 +125,26 @@ module Routes::API::V2::Stops
       )
 
       APIResponse.success(r.response, Serializers::StopSerializer.new(res['data']['stops'], view: :departures).to_json)
+    else
+      APIResponse.error(r.response, validation_result.errors.to_h, 400)
+    end
+  end
+
+  def self.handle_trips_request(r, trip_id, datetime)
+    contract = Validations::TripsValidation::TripContract.new
+    validation_result = contract.call(trip_id:, datetime:)
+
+    if validation_result.success?
+
+      res = Application['graphql'].query(
+        Graphql::StopsQueries::StopTimesByTrip,
+        variables: {
+          trip_id: trip_id,
+          service_date: Helpers::TimeHelper.format_service_date(datetime)
+        }
+      )
+
+      APIResponse.success(r.response, "Successfull")
     else
       APIResponse.error(r.response, validation_result.errors.to_h, 400)
     end

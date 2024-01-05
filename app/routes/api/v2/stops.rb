@@ -119,7 +119,7 @@ module Routes::API::V2::Stops
 
       if c_id.nil?
         s_id = Models::Stop.search_stop_by_name(stopname)
-        return APIResponse.error(r.response, 'diocan', 400) if s_id.nil?
+        return APIResponse.error(r.response, 'The stop name provided is incorrect!', 400) if s_id.nil?
 
         s_id = "#{a_id}:#{s_id}"
       else
@@ -127,7 +127,6 @@ module Routes::API::V2::Stops
         s_id.map! { |x| "#{a_id}:#{x}" }
       end
 
-      p s_id
       res = Application['graphql'].query(
         Graphql::StopsQueries::DeparturesByStop,
         variables: {

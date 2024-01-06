@@ -46,8 +46,17 @@ module Serializers
       # Formattazione di base
       {
         headsign: stop['tripHeadsign'],
+        route_name: stop['routeShortName'],
         active_dates: stop['activeDates'],
-        stops: format_trip_stoptimes(stop['stoptimesForDate'])
+        stops: format_trip_stoptimes(stop['stoptimesForDate']),
+        trip_geometry: format_trip_geometry(stop['tripGeometry'])
+      }
+    end
+
+    def format_trip_geometry(geometry)
+      {
+        length: geometry['length'],
+        points: geometry['points']
       }
     end
 
@@ -84,6 +93,7 @@ module Serializers
     def format_only_stop_name(stop)
       # Formattazione di base
       {
+        id: stop['gtfsId'],
         name: stop['name']
       }
     end

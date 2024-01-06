@@ -62,6 +62,7 @@ query (
   trip(id: $trip_id) {
     gtfsId
     tripHeadsign
+    routeShortName
     activeDates
     stoptimesForDate(serviceDate: $service_date) {
       stopPosition
@@ -71,23 +72,11 @@ query (
         name
       }
     }
-  }
-}
-  GRAPHQL
-
-  GeometryByTrip = <<-'GRAPHQL'
-query (
-    $id: String!
-) {
-  trip(id: $id) {
-    id
-    tripHeadsign
-    routeShortName
-    tripGeometry {
+    tripGeometry{
       length
       points
     }
   }
 }
-GRAPHQL
+  GRAPHQL
 end

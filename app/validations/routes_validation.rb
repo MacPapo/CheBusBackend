@@ -7,7 +7,7 @@ module Validations::RoutesValidation
     params do
       required(:from_stop_name).filled(:string)
       required(:to_stop_name).filled(:string)
-      required(:datetime).filled(:string, format?: Helpers::ValidatorHelper.datetime_regex)
+      required(:datetime).filled(:string, format?: Helpers::ValidatorHelper::DATETIME_REGEXP)
       required(:interval).filled(:integer, gt?: 0)
       required(:is_arrival_time).filled(:bool)
     end

@@ -6,7 +6,7 @@ module Validations::StopsValidation
     # Defines the parameters to be validated and their requirements.
     params do
       required(:stopname).filled(:string)
-      required(:datetime).filled(:string, format?: Helpers::ValidatorHelper.datetime_regex)
+      required(:datetime).filled(:string, format?: Helpers::ValidatorHelper::DATETIME_REGEXP)
       required(:interval).filled(:integer, gt?: 0)
     end
 

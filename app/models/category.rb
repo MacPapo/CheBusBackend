@@ -7,7 +7,6 @@ module Models
 
     def self.find_id_by_name(name)
       res = Category.where(name:).select(:id).first
-      p name if res.nil?
       res.nil? ? nil : res[:id]
     end
   end

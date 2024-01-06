@@ -58,7 +58,7 @@ module Routes::API::V2::Stops
 
         unless ratings.empty?
           ratings.each do |rating|
-            change = data.find { |stop| stop['name'] == rating[:name]}
+            change = data.find { |stop| stop['name'] == rating[:name] }
             change['rating'] = rating[:rating]
           end
         end
@@ -102,11 +102,11 @@ module Routes::API::V2::Stops
         variables: {
           ids: s_id,
           interval: interval_in_sec,
-          start_time: unix_timestamp,
+          start_time: unix_timestamp
         }
-      )
+      )['data']['stops'].delete_if { |x| x['stoptimesForPatterns'].empty? }
 
-      APIResponse.success(r.response, Serializers::StopSerializer.new(res['data']['stops'], view: :departures).to_json)
+      APIResponse.success(r.response, Serializers::StopSerializer.new(res, view: :departures).to_json)
     else
       APIResponse.error(r.response, validation_result.errors.to_h, 400)
     end
@@ -123,22 +123,20 @@ module Routes::API::V2::Stops
           trip_id:,
           service_date: Helpers::TimeHelper.format_service_date(datetime)
         }
-      )
+      )['data']['trip']
 
-      APIResponse.success(r.response, Serializers::StopSerializer.new(res['data']['trip'], view: :trips).to_json)
+      APIResponse.success(r.response, Serializers::StopSerializer.new(res, view: :trips).to_json)
     else
       APIResponse.error(r.response, validation_result.errors.to_h, 400)
     end
   end
 
   def self.handle_agency_query(name)
-    res = Application['graphql'].query(
+    Application['graphql'].query(
       Graphql::StopsQueries::AgencyIdByStop,
       variables: {
         stop_name: name
       }
-    )['data']['stops']
-
-    res[0]['routes'][0]['agency']['gtfsId'].split(':').first
+    )['data']['stops'][0]['routes'][0]['agency']['gtfsId'].split(':').first
   end
 end

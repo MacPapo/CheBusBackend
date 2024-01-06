@@ -6,7 +6,7 @@ module Validations::TripsValidation
     # Defines the parameters to be validated and their requirements.
     params do
       required(:trip_id).filled(:string)
-      required(:datetime).filled(:string, format?: Helpers::ValidatorHelper.datetime_regex)
+      required(:datetime).filled(:string, format?: Helpers::ValidatorHelper::DATETIME_REGEXP)
     end
 
     # Custom validation rule for 'stop_id'.

@@ -75,8 +75,6 @@ module Routes::API::V2::Routes
         elsif leg.last['mode'] == 'WALK'
           leg.pop
         end
-
-        p leg
       end
     end
 

@@ -56,13 +56,15 @@ build-iPhoneSimulator/
 # .rubocop-https?--*
 /.env.development
 /.env.test
-/db/*.sql
-*.log
 /.env.production
-/roda_development
+/db/*.sql
+*.db
+*.log
 /otp/
 /gtfs_urls.csv
-*.DS_Store
+/duplicated_stops.txt
+/stops_config.txt
 /stop_clusters.txt
+*.DS_Store
 /.idea/
 *.rdb

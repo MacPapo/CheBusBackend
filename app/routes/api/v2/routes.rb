@@ -63,6 +63,23 @@ module Routes::API::V2::Routes
       }
     )['data']['plan']
 
+    result['itineraries'].each do |it|
+      leg = it['legs']
+
+      unless leg.empty?
+        if leg.first['mode'] == 'WALK' && leg.last['mode'] == 'WALK'
+          leg.shift
+          leg.pop
+        elsif leg.first['mode'] == 'WALK'
+          leg.shift
+        elsif leg.last['mode'] == 'WALK'
+          leg.pop
+        end
+
+        p leg
+      end
+    end
+
     APIResponse.success(response, Serializers::PlanSerializer.new(result['itineraries']).to_json)
   end
 

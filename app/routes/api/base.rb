@@ -5,10 +5,10 @@ module Routes::API::Base
   # @param app [Roda] The Roda application instance.
   def self.register(app)
     # Registers the root route for API version 1.
-    app.hash_branch('v1') do |r|
-      # Registers all hash branches under the v1 namespace.
-      r.hash_branches(:v1)
-    end
+    # app.hash_branch('v1') do |r|
+    #   # Registers all hash branches under the v1 namespace.
+    #   r.hash_branches(:v1)
+    # end
 
     # Registers the root route for API version 2.
     app.hash_branch('v2') do |r|
@@ -17,7 +17,7 @@ module Routes::API::Base
     end
 
     # Registers all routes defined for version 1 of the API.
-    v1_routes.each { |route| route.register(app) }
+    # v1_routes.each { |route| route.register(app) }
 
     # Registers all routes defined for version 2 of the API.
     v2_routes.each { |route| route.register(app) }

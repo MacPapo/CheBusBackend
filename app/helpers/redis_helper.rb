@@ -5,8 +5,9 @@ module Helpers::RedisHelper
   @import_all_stops_in_progress = false
   GEO_KEY = 'geo_stops'
   ALL_KEY = 'stops'
+  DEFAULT_TTL = 43200
 
-  def self.geo_import_stops_if_needed(stops)
+  def self.geo_import_stops_if_needed(stops, expire_time = DEFAULT_TTL)
     return if @geo_import_in_progress
 
     @geo_import_in_progress = true
@@ -16,6 +17,7 @@ module Helpers::RedisHelper
           stops.each do |stop|
             self.geo_add_stop(stop)
           end
+          Application['redis'].expire(GEO_KEY, expire_time)
         end
       ensure
         @geo_import_in_progress = false
@@ -23,12 +25,13 @@ module Helpers::RedisHelper
     end
   end
 
-  def self.import_all_stops_if_needed(stops)
+  def self.import_all_stops_if_needed(stops, expire_time = DEFAULT_TTL)
     return if @import_all_stops_in_progress
 
     @import_all_stops_in_progress = true
     Thread.new do
       Application['redis'].set(ALL_KEY, stops)
+      Application['redis'].expire(ALL_KEY, expire_time)
     ensure
       @import_all_stops_in_progress = false
     end

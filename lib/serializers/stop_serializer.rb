@@ -64,9 +64,10 @@ module Serializers
     def format_departure_stop(departure)
       # Formattazione di base
       {
-        id: departure['gtfsId'],
-        name: departure['name'],
-        stops: format_stoptimes_patterns(departure['stoptimesForPatterns'])
+        stop_id: departure['stop_id'],
+        stop_name: departure['from_stop'],
+        t_arrival: Helpers::TimeHelper.sec_til_mid(departure['scheduledArrival']),
+        trip: format_trip(departure['trip'])
       }
     end
 
@@ -96,17 +97,6 @@ module Serializers
         id: stop['gtfsId'],
         name: stop['name']
       }
-    end
-
-    def format_stoptimes_patterns(spatterns)
-      spatterns.map do |pattern|
-        pattern['stoptimes'].map do |stime|
-          {
-            t_arrival: Helpers::TimeHelper.sec_til_mid(stime['scheduledArrival']),
-            trip: format_trip(stime['trip'])
-          }
-        end
-      end
     end
 
     def format_trip(trip)

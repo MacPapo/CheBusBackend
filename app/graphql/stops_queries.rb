@@ -22,30 +22,26 @@ query (
     $interval: Int
 ) {
   stops(ids: $ids) {
-    id
     name
     gtfsId
-    stoptimesForPatterns(timeRange: $interval, startTime: $start_time) {
-      stoptimes {
-        scheduledArrival
-        trip {
+    stoptimesWithoutPatterns(startTime: $start_time, timeRange: $interval) {
+      scheduledArrival
+      trip {
+        gtfsId
+        tripHeadsign
+        activeDates
+        route {
           id
-          gtfsId
-          tripHeadsign
-          activeDates
-          route {
+          shortName
+          longName
+          mode
+        }
+        arrivalStoptime {
+          stopPosition
+          scheduledArrival
+          stop {
             id
-            shortName
-            longName
-            mode
-          }
-          arrivalStoptime {
-            stopPosition
-            scheduledArrival
-            stop {
-              id
-              name
-            }
+            name
           }
         }
       }

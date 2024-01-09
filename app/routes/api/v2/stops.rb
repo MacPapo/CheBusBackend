@@ -84,16 +84,18 @@ module Routes::API::V2::Stops
       unix_timestamp = Helpers::TimeHelper.from_date_to_unix_str(datetime)
       interval_in_sec = Helpers::TimeHelper.min_in_sec(interval)
 
-      a_id = self.handle_agency_query(stopname)
       c_id = Models::StopCluster.search_id_in_cluster_by_name(stopname)
 
       if c_id.nil?
         s_id = Models::Stop.search_stop_id_by_name(stopname)
         return APIResponse.error(r.response, 'The stop name provided is incorrect!', 400) if s_id.nil?
 
+        a_id = self.handle_agency_query(stopname)
         s_id = "#{a_id}:#{s_id}"
       else
         s_id = Models::Stop.search_stops_id_by_cid(c_id)
+
+        a_id = self.handle_agency_query(stopname)
         s_id.map! { |x| "#{a_id}:#{x}" }
       end
 
@@ -104,9 +106,13 @@ module Routes::API::V2::Stops
           interval: interval_in_sec,
           start_time: unix_timestamp
         }
-      )['data']['stops'].delete_if { |x| x['stoptimesForPatterns'].empty? }
+      )['data']['stops'].delete_if { |x| x['stoptimesWithoutPatterns'].empty? }
 
-      APIResponse.success(r.response, Serializers::StopSerializer.new(res, view: :departures).to_json)
+      APIResponse.success(
+        r.response, Serializers::StopSerializer.new(
+          sort_departure_by_arrival_time(res),
+          view: :departures).to_json
+      )
     else
       APIResponse.error(r.response, validation_result.errors.to_h, 400)
     end
@@ -132,11 +138,31 @@ module Routes::API::V2::Stops
   end
 
   def self.handle_agency_query(name)
-    Application['graphql'].query(
+    res = Application['graphql'].query(
       Graphql::StopsQueries::AgencyIdByStop,
       variables: {
         stop_name: name
       }
     )['data']['stops'][0]['routes'][0]['agency']['gtfsId'].split(':').first
+  end
+
+  def self.purify_output(out)
+    out.map do |x|
+      x['stoptimesWithoutPatterns'].map do |y|
+        y['from_stop'] = x['name']
+        y['stop_id'] = x['gtfsId']
+      end
+
+      x = x['stoptimesWithoutPatterns'] 
+    end.flatten
+  end
+
+
+  def self.sort_departure_by_arrival_time(raw_departure)
+    departure = purify_output(raw_departure)
+
+    return departure if departure.nil? || departure.empty?
+
+    departure.sort_by { |x| x['scheduledArrival'].to_i }
   end
 end

@@ -16,36 +16,36 @@ query(
   GRAPHQL
 
   DeparturesByStop = <<-'GRAPHQL'
+
+# This is an example query for fetching all routes of your OTP deployment.
+# Click on the documentation icon on the left to read about the available types
+# or use autocomplete to explore the schema.
 query (
     $ids: [String],
     $start_time: Long,
     $interval: Int
 ) {
   stops(ids: $ids) {
-    id
     name
     gtfsId
-    stoptimesForPatterns(timeRange: $interval, startTime: $start_time) {
-      stoptimes {
-        scheduledArrival
-        trip {
+    stoptimesWithoutPatterns(timeRange: $interval, startTime: $start_time) {
+      scheduledArrival
+      trip {
+        gtfsId
+        tripHeadsign
+        activeDates
+        route {
           id
-          gtfsId
-          tripHeadsign
-          activeDates
-          route {
+          shortName
+          longName
+          mode
+        }
+        arrivalStoptime {
+          stopPosition
+          scheduledArrival
+          stop {
             id
-            shortName
-            longName
-            mode
-          }
-          arrivalStoptime {
-            stopPosition
-            scheduledArrival
-            stop {
-              id
-              name
-            }
+            name
           }
         }
       }

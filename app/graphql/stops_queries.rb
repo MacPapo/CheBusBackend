@@ -16,10 +16,6 @@ query(
   GRAPHQL
 
   DeparturesByStop = <<-'GRAPHQL'
-
-# This is an example query for fetching all routes of your OTP deployment.
-# Click on the documentation icon on the left to read about the available types
-# or use autocomplete to explore the schema.
 query (
     $ids: [String],
     $start_time: Long,

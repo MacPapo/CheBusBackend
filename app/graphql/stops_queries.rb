@@ -24,7 +24,7 @@ query (
   stops(ids: $ids) {
     name
     gtfsId
-    stoptimesWithoutPatterns(startTime: $start_time, timeRange: $interval) {
+    stoptimesWithoutPatterns(timeRange: $interval, startTime: $start_time) {
       scheduledArrival
       trip {
         gtfsId

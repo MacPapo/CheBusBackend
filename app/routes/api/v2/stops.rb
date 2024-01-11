@@ -138,7 +138,7 @@ module Routes::API::V2::Stops
   end
 
   def self.handle_agency_query(name)
-    res = Application['graphql'].query(
+    Application['graphql'].query(
       Graphql::StopsQueries::AgencyIdByStop,
       variables: {
         stop_name: name

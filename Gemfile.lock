@@ -98,8 +98,7 @@ GEM
     minitest (5.20.0)
     multi_json (1.15.0)
     mutex_m (0.2.0)
-    newrelic_rpm (9.6.0)
-      base64
+    newrelic_rpm (9.7.0)
     nokogiri (1.16.0-arm64-darwin)
       racc (~> 1.4)
     nokogiri (1.16.0-x86_64-linux)
@@ -115,7 +114,7 @@ GEM
     pry (0.14.2)
       coderay (~> 1.1)
       method_source (~> 1.0)
-    pry-doc (1.4.0)
+    pry-doc (1.5.0)
       pry (~> 0.11)
       yard (~> 0.9.11)
     public_suffix (5.0.4)

@@ -1,16 +1,21 @@
-# frozen-string-literal: true
+# frozen_string_literal: true
 
 module Graphql::PlanQueries
-  Plan = <<-'GRAPHQL'
-query(
+  PLAN = <<-'GRAPHQL'
+query (
     $flat: Float!,
     $flon: Float!,
     $tlat: Float!,
     $tlon: Float!,
-    $search_window: Long!,
-    $date: String!,
-    $time: String!,
-    $is_arrival_time: Boolean
+    $num_itineraries: Int,
+    $search_window: Long,
+    $date: String,
+    $time: String,
+    $is_arrival_time: Boolean,
+    $transfer_penalty: Int,
+    $walk_reluctance: Float,
+    $wait_reluctance: Float,
+    $walk_board_cost: Int
 ) {
     plan(
         from: { lat: $flat, lon: $flon }
@@ -19,10 +24,11 @@ query(
         date: $date
         time: $time
         searchWindow: $search_window
-        numItineraries: 50
-        transferPenalty: 30
-        walkReluctance: 60
-        waitReluctance: 1.0
+        numItineraries: $num_itineraries
+        transferPenalty: $transfer_penalty
+        walkReluctance: $walk_reluctance
+        waitReluctance: $wait_reluctance
+      	walkBoardCost: $walk_board_cost
         transportModes: [
             {
                 mode: TRANSIT
@@ -36,31 +42,39 @@ query(
                 mode
                 startTime
                 endTime
+                duration
+                distance
                 from {
-                    name
-                    lat
-                    lon
-                    departureTime
-                    arrivalTime
+                  name
+                  lat
+                  lon
+                  departureTime
+                  stop {
+                    vehicleMode
+                  }
                 }
                 to {
-                    name
-                    lat
-                    lon
-                    departureTime
-                    arrivalTime
+                  name
+                  lat
+                  lon
+                  departureTime
+                  stop {
+                    vehicleMode
+                  }
                 }
-                agency {
-                    id
-                    gtfsId
+                intermediatePlaces {
+                    name
+                  lat
+                  lon
+                  departureTime
+                  stop {
+                    vehicleMode
+                  }
                 }
                 route {
-                    gtfsId
-                    longName
                     shortName
-                }
-                trip {
-                    id
+                    color
+                  	textColor
                 }
                 legGeometry {
                     points

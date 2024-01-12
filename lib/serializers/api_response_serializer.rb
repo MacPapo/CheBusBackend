@@ -3,13 +3,6 @@
 module Serializers
   # {APIResponseSerializer} is a class that serializes API responses into JSON format.
   class APIResponseSerializer < ApplicationSerializer
-    # Initializes the serializer with a response object.
-    #
-    # @param response [Hash] the response object to be serialized.
-    def initialize(response)
-      super(response)
-    end
-
     # Serializes the response object to JSON.
     #
     # @return [Hash] the serialized response data.

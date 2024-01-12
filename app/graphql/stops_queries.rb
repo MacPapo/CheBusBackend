@@ -21,7 +21,8 @@ query (
     $start_time: Long,
     $interval: Int,
     $num_departures: Int,
-    $omit_non_pickup: Boolean
+    $omit_non_pickup: Boolean,
+    $omit_canceled: Boolean
 ) {
   stops(
     ids: $ids
@@ -29,16 +30,22 @@ query (
     name
     lat
     lon
+    vehicleMode
     stoptimesWithoutPatterns(
       timeRange: $interval,
       startTime: $start_time,
-      numberOfDepartures: $num_departures
-      omitNonPickups: $omit_non_pickup
+      numberOfDepartures: $num_departures,
+      omitNonPickups: $omit_non_pickup,
+      omitCanceled: $omit_canceled
     ) {
       scheduledArrival
       headsign
       trip {
-        routeShortName
+        route {
+          shortName
+          color
+          textColor
+        }
         stoptimes {
           scheduledDeparture
           stop {
@@ -52,32 +59,6 @@ query (
           points
         }
       }
-    }
-  }
-}
-  GRAPHQL
-
-  STOP_TIMES_BY_TRIP = <<-'GRAPHQL'
-query (
-    $trip_id: String!,
-    $service_date: String!
-) {
-  trip(id: $trip_id) {
-    gtfsId
-    tripHeadsign
-    routeShortName
-    activeDates
-    stoptimesForDate(serviceDate: $service_date) {
-      stopPosition
-      scheduledArrival
-      stop {
-        gtfsId
-        name
-      }
-    }
-    tripGeometry{
-      length
-      points
     }
   }
 }

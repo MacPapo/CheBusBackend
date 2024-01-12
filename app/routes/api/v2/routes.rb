@@ -4,6 +4,10 @@
 module Routes::API::V2::Routes
   # Constants defining the required parameters for the route endpoint.
   ROUTE_PARAMS = %w[from_stop_name to_stop_name datetime interval is_arrival_time].freeze
+  TRANSFER_PENALTY = 30
+  WALK_RELUCTANCE = 60
+  WAIT_RELUCTANCE = 1
+  WALK_BOARD_COST = 700
 
   # Registers routes under the '/v2/routes' path.
   # @param app [Roda] The main application instance.
@@ -50,7 +54,7 @@ module Routes::API::V2::Routes
     end
 
     result = Application['graphql'].query(
-      Graphql::PlanQueries::Plan,
+      Graphql::PlanQueries::PLAN,
       variables: {
         flat: from_lat,
         flon: from_lon,
@@ -59,11 +63,32 @@ module Routes::API::V2::Routes
         date:,
         time:,
         search_window: interval_sec,
-        is_arrival_time:
+        is_arrival_time:,
+        transfer_penalty: TRANSFER_PENALTY,
+        walk_reluctance: WALK_RELUCTANCE,
+        wait_reluctance: WAIT_RELUCTANCE,
+        walk_board_cost: WALK_BOARD_COST
       }
     )['data']['plan']
 
-    result['itineraries'].each do |it|
+    APIResponse.success(response, Serializers::PlanSerializer.new(trim_walk_paths(result['itineraries'])).to_json)
+  end
+
+  def self.invalid_location?(lat, lon)
+    lat.nil? && lon.nil?
+  end
+
+  def self.fetch_location(stop_name)
+    lat, lon = Models::StopCluster.search_location_in_cluster_by_name(stop_name)
+
+    # If not in cluster
+    lat, lon = Models::Stop.search_location_in_stops_by_name(stop_name) if invalid_location?(lat, lon)
+
+    [lat, lon]
+  end
+
+  def self.trim_walk_paths(itineraries)
+    itineraries.each do |it|
       leg = it['legs']
 
       unless leg.empty?
@@ -78,19 +103,6 @@ module Routes::API::V2::Routes
       end
     end
 
-    APIResponse.success(response, Serializers::PlanSerializer.new(result['itineraries']).to_json)
-  end
-
-  def self.invalid_location?(lat, lon)
-    lat.nil? && lon.nil?
-  end
-
-  def self.fetch_location(stop_name)
-    lat, lon = Models::StopCluster.search_location_in_cluster_by_name(stop_name)
-
-    # If not in cluster
-    lat, lon = Models::Stop.search_location_in_stops_by_name(stop_name) if invalid_location?(lat, lon)
-
-    [lat, lon]
+    itineraries
   end
 end

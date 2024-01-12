@@ -2,15 +2,11 @@
 
 module Serializers
   class StopSerializer < ApplicationSerializer
-    # Inizializza il serializzatore con un oggetto e opzioni.
-    # @param object [Hash, Array<Hash>] Un singolo oggetto fermata o un array di oggetti fermata.
-    # @param opts [Hash] Opzioni per personalizzare la serializzazione.
     def initialize(object, opts = {})
-      super(object) # Chiama il costruttore della classe genitore.
+      super(object)
       @opts = opts
     end
 
-    # Metodo principale per serializzare l'output.
     def to_json(*_args)
       case @opts[:view]
       when :stops
@@ -24,33 +20,32 @@ module Serializers
 
     private
 
-    # Serializzazione di default.
     def all_stops
       format_stops { |stop| format_stop(stop) }
     end
 
-    # Restituisce le fermate con tutti i dettagli.
     def departures_stops
       format_stops { |departure| format_departure_stop(departure) }
     end
 
-    # Format Departure QUERY.
     def format_departure_stop(departure)
-      # Formattazione di base
+      retrive_from_route = ->(hash, key) { hash['route'].nil? || hash['route'].empty? ? nil : hash['route'][key] }
       {
         departure_stop_name: departure['from_stop'],
         departure_stop_lat: departure['from_lat'],
         departure_stop_lon: departure['from_lon'],
+        departure_stop_mode: departure['from_mode'],
         first_departure_time: Helpers::TimeHelper.sec_til_mid(departure['scheduledArrival']),
         headsign: departure['headsign'],
-        line: departure['trip']['routeShortName'],
+        line: retrive_from_route.call(departure['trip'], 'shortName'),
+        line_bg_color: retrive_from_route.call(departure['trip'], 'color'),
+        line_txt_color: retrive_from_route.call(departure['trip'], 'textColor'),
         times: format_stop_times(departure['trip']['stoptimes']),
         geometries: departure['trip']['tripGeometry']['points']
       }
     end
 
     def format_stop(stop)
-      # Formattazione di base
       {
         name: stop[0],
         lat: stop[1],
@@ -72,7 +67,6 @@ module Serializers
       end
     end
 
-    # Metodo helper per formattare un array di fermate.
     def format_stops(&block)
       if @object.is_a?(Array)
         @object.map(&block)

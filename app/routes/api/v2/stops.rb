@@ -3,7 +3,9 @@
 # Module for defining API endpoints related to bus stops.
 # Provides RESTful routes for accessing stop information and departures.
 module Routes::API::V2::Stops
-  MAX_DEPARTURES = 50
+  MAX_DEPARTURES = 200
+  OMIT_NON_PICKUP = true
+  OMIT_CANCELED = true
   USER_PARAMS = %w[latitude longitude].freeze
   DEPARTURES_PARAMS = %w[stopname datetime interval].freeze
 
@@ -25,43 +27,46 @@ module Routes::API::V2::Stops
     end
   end
 
-  def self.valid_location?(lat, lon)
-    !(lat.empty? || lon.empty?) && !(lat.to_f.zero? || lon.to_f.zero?)
-  end
+  def self.handle_all_stops_request(resp, lat, lon)
+    contract = Validations::StopsValidation::StopsContract.new
+    validation_result = contract.call(latitude: lat, longitude: lon)
 
-  def self.handle_all_stops_request(r, lat, lon)
-    data = Helpers::RedisHelper.get_stops
+    if validation_result.success?
+      data = Helpers::RedisHelper.get_stops
 
-    res = nil
-    if data.empty?
-      stops = Models::Stop.give_all_stops_no_cluster
-      cluster = Models::StopCluster.give_all_stops_cluster
+      res = nil
+      if data.empty?
+        stops = Models::Stop.give_all_stops_no_cluster
+        cluster = Models::StopCluster.give_all_stops_cluster
 
-      data = (stops + cluster).map { |x| [x[0], x[1], x[2], x[3], 0] }
-      res = Serializers::StopSerializer.new(data)
-      Helpers::RedisHelper.geo_import_stops_if_needed(data)
-      Helpers::RedisHelper.import_all_stops_if_needed(res.render)
-      res = res.to_json
-    else
-      if valid_location?(lat, lon)
-        ratings = Helpers::RedisHelper.geo_rating([lat.to_f, lon.to_f])
+        data = (stops + cluster).map { |x| [x[0], x[1], x[2], x[3], 0] }
+        res = Serializers::StopSerializer.new(data)
+        Helpers::RedisHelper.geo_import_stops_if_needed(data)
+        Helpers::RedisHelper.import_all_stops_if_needed(res.render)
+        res = res.to_json
+      else
+        unless lat.to_f.zero? || lon.to_f.zero?
+          ratings = Helpers::RedisHelper.geo_rating([lat.to_f, lon.to_f])
 
-        unless ratings.empty?
-          ratings.each do |rating|
-            change = data.find { |stop| stop['name'] == rating[:name] }
-            change['rating'] = rating[:rating]
+          unless ratings.empty?
+            ratings.each do |rating|
+              change = data.find { |stop| stop['name'] == rating[:name] }
+              change['rating'] = rating[:rating]
+            end
           end
         end
+
+        res = data
       end
 
-      res = data
+      APIResponse.success(resp.response, res)
+    else
+      APIResponse.error(resp.response, validation_result.errors.to_h, 400)
     end
-
-    APIResponse.success(r.response, res)
   end
 
-  def self.handle_departures_request(r, stopname, datetime, interval)
-    contract = Validations::StopsValidation::StopContract.new
+  def self.handle_departures_request(resp, stopname, datetime, interval)
+    contract = Validations::StopsValidation::DepartureContract.new
     validation_result = contract.call(stopname:, datetime:, interval:)
 
     if validation_result.success?
@@ -72,7 +77,7 @@ module Routes::API::V2::Stops
 
       if c_id.nil?
         s_id = Models::Stop.search_stop_id_by_name(stopname)
-        return APIResponse.error(r.response, 'The stop name provided is incorrect!', 400) if s_id.nil?
+        return APIResponse.error(resp.response, 'The stop name provided is incorrect!', 400) if s_id.nil?
 
         a_id = handle_agency_query(stopname)
         s_id = "#{a_id}:#{s_id}"
@@ -89,20 +94,21 @@ module Routes::API::V2::Stops
           ids: s_id,
           start_time: unix_timestamp,
           interval: interval_in_sec,
-          num_departures: 100,
-          omit_non_pickup: true
+          num_departures: MAX_DEPARTURES,
+          omit_non_pickup: OMIT_NON_PICKUP,
+          omit_canceled: OMIT_CANCELED
         }
       )['data']['stops']
-      # .delete_if { |x| x['stoptimesWithoutPatterns'].empty? }
 
       APIResponse.success(
-        r.response, Serializers::StopSerializer.new(
+        resp.response,
+        Serializers::StopSerializer.new(
           sort_departure_by_arrival_time(res),
           view: :departures
         ).to_json
       )
     else
-      APIResponse.error(r.response, validation_result.errors.to_h, 400)
+      APIResponse.error(resp.response, validation_result.errors.to_h, 400)
     end
   end
 
@@ -121,6 +127,7 @@ module Routes::API::V2::Stops
         y['from_stop'] = x['name']
         y['from_lat']  = x['lat']
         y['from_lon']  = x['lon']
+        y['from_mode'] = x['vehicleMode']
       end
 
       x = x['stoptimesWithoutPatterns']

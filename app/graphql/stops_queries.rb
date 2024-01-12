@@ -1,7 +1,7 @@
-# frozen-string-literal: true
+# frozen_string_literal: true
 
 module Graphql::StopsQueries
-  AgencyIdByStop = <<-'GRAPHQL'
+  AGENCY_ID_BY_STOP = <<-'GRAPHQL'
 query(
     $stop_name: String!
 ) {
@@ -15,34 +15,41 @@ query(
 }
   GRAPHQL
 
-  DeparturesByStop = <<-'GRAPHQL'
+  DEPARTURES_BY_STOP = <<-'GRAPHQL'
 query (
     $ids: [String],
     $start_time: Long,
-    $interval: Int
+    $interval: Int,
+    $num_departures: Int,
+    $omit_non_pickup: Boolean
 ) {
-  stops(ids: $ids) {
+  stops(
+    ids: $ids
+  ) {
     name
-    gtfsId
-    stoptimesWithoutPatterns(timeRange: $interval, startTime: $start_time) {
+    lat
+    lon
+    stoptimesWithoutPatterns(
+      timeRange: $interval,
+      startTime: $start_time,
+      numberOfDepartures: $num_departures
+      omitNonPickups: $omit_non_pickup
+    ) {
       scheduledArrival
+      headsign
       trip {
-        gtfsId
-        tripHeadsign
-        activeDates
-        route {
-          id
-          shortName
-          longName
-          mode
-        }
-        arrivalStoptime {
-          stopPosition
-          scheduledArrival
+        routeShortName
+        stoptimes {
+          scheduledDeparture
           stop {
-            id
             name
+            lat
+            lon
+            vehicleMode
           }
+        }
+        tripGeometry {
+          points
         }
       }
     }
@@ -50,7 +57,7 @@ query (
 }
   GRAPHQL
 
-  StopTimesByTrip = <<-'GRAPHQL'
+  STOP_TIMES_BY_TRIP = <<-'GRAPHQL'
 query (
     $trip_id: String!,
     $service_date: String!

@@ -6,7 +6,6 @@ module Routes::API::V2::Stops
   MAX_DEPARTURES = 50
   USER_PARAMS = %w[latitude longitude].freeze
   DEPARTURES_PARAMS = %w[stopname datetime interval].freeze
-  TRIPS_PARAMS = %w[trip_id datetime].freeze
 
   # Registers routes under the 'stops' namespace.
   # @param app [Roda] The Roda application to which the routes are registered.
@@ -23,12 +22,6 @@ module Routes::API::V2::Stops
           Routes::API::V2::Stops.handle_departures_request(r, stopname, datetime, interval)
         end
       end
-
-      r.on 'trips' do
-        r.get(params!: TRIPS_PARAMS) do |trip_id, datetime|
-          Routes::API::V2::Stops.handle_trips_request(r, trip_id, datetime)
-        end
-      end
     end
   end
 
@@ -36,9 +29,6 @@ module Routes::API::V2::Stops
     !(lat.empty? || lon.empty?) && !(lat.to_f.zero? || lon.to_f.zero?)
   end
 
-  # Handles requests for all bus stops.
-  # @param _r [Roda::RodaRequest] The Roda request object.
-  # @return [String] Serialized JSON response containing all stops.
   def self.handle_all_stops_request(r, lat, lon)
     data = Helpers::RedisHelper.get_stops
 
@@ -70,12 +60,6 @@ module Routes::API::V2::Stops
     APIResponse.success(r.response, res)
   end
 
-  # Handles requests for departures from a specific stop within a given time interval.
-  # @param _r [Roda::RodaRequest] The Roda request object.
-  # @param stopname [String] The name of the stop.
-  # @param datetime [String] The starting datetime for departures.
-  # @param interval [String] The time interval in minutes.
-  # @return [String] Serialized JSON response of departures.
   def self.handle_departures_request(r, stopname, datetime, interval)
     contract = Validations::StopsValidation::StopContract.new
     validation_result = contract.call(stopname:, datetime:, interval:)
@@ -90,48 +74,33 @@ module Routes::API::V2::Stops
         s_id = Models::Stop.search_stop_id_by_name(stopname)
         return APIResponse.error(r.response, 'The stop name provided is incorrect!', 400) if s_id.nil?
 
-        a_id = self.handle_agency_query(stopname)
+        a_id = handle_agency_query(stopname)
         s_id = "#{a_id}:#{s_id}"
       else
         s_id = Models::Stop.search_stops_id_by_cid(c_id)
 
-        a_id = self.handle_agency_query(stopname)
+        a_id = handle_agency_query(stopname)
         s_id.map! { |x| "#{a_id}:#{x}" }
       end
 
       res = Application['graphql'].query(
-        Graphql::StopsQueries::DeparturesByStop,
+        Graphql::StopsQueries::DEPARTURES_BY_STOP,
         variables: {
           ids: s_id,
+          start_time: unix_timestamp,
           interval: interval_in_sec,
-          start_time: unix_timestamp
+          num_departures: 100,
+          omit_non_pickup: true
         }
-      )['data']['stops'].delete_if { |x| x['stoptimesWithoutPatterns'].empty? }
+      )['data']['stops']
+      # .delete_if { |x| x['stoptimesWithoutPatterns'].empty? }
 
       APIResponse.success(
         r.response, Serializers::StopSerializer.new(
           sort_departure_by_arrival_time(res),
-          view: :departures).to_json
+          view: :departures
+        ).to_json
       )
-    else
-      APIResponse.error(r.response, validation_result.errors.to_h, 400)
-    end
-  end
-
-  def self.handle_trips_request(r, trip_id, datetime)
-    contract = Validations::TripsValidation::TripContract.new
-    validation_result = contract.call(trip_id:, datetime:)
-
-    if validation_result.success?
-      res = Application['graphql'].query(
-        Graphql::StopsQueries::StopTimesByTrip,
-        variables: {
-          trip_id:,
-          service_date: Helpers::TimeHelper.format_service_date(datetime)
-        }
-      )['data']['trip']
-
-      APIResponse.success(r.response, Serializers::StopSerializer.new(res, view: :trips).to_json)
     else
       APIResponse.error(r.response, validation_result.errors.to_h, 400)
     end
@@ -139,7 +108,7 @@ module Routes::API::V2::Stops
 
   def self.handle_agency_query(name)
     Application['graphql'].query(
-      Graphql::StopsQueries::AgencyIdByStop,
+      Graphql::StopsQueries::AGENCY_ID_BY_STOP,
       variables: {
         stop_name: name
       }
@@ -150,13 +119,13 @@ module Routes::API::V2::Stops
     out.map do |x|
       x['stoptimesWithoutPatterns'].map do |y|
         y['from_stop'] = x['name']
-        y['stop_id'] = x['gtfsId']
+        y['from_lat']  = x['lat']
+        y['from_lon']  = x['lon']
       end
 
-      x = x['stoptimesWithoutPatterns'] 
+      x = x['stoptimesWithoutPatterns']
     end.flatten
   end
-
 
   def self.sort_departure_by_arrival_time(raw_departure)
     departure = purify_output(raw_departure)

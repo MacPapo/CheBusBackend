@@ -15,8 +15,6 @@ module Serializers
       case @opts[:view]
       when :stops
         all_stops
-      when :trips
-        trips_stops
       when :departures
         departures_stops
       else
@@ -32,52 +30,23 @@ module Serializers
     end
 
     # Restituisce le fermate con tutti i dettagli.
-    def trips_stops
-      format_stops { |stop| format_trips_stop(stop) }
-    end
-
-    # Restituisce le fermate con tutti i dettagli.
     def departures_stops
       format_stops { |departure| format_departure_stop(departure) }
-    end
-
-    # Formatta una singola fermata.
-    def format_trips_stop(stop)
-      # Formattazione di base
-      {
-        headsign: stop['tripHeadsign'],
-        route_name: stop['routeShortName'],
-        active_dates: stop['activeDates'],
-        stops: format_trip_stoptimes(stop['stoptimesForDate']),
-        trip_geometry: format_trip_geometry(stop['tripGeometry'])
-      }
-    end
-
-    def format_trip_geometry(geometry)
-      {
-        length: geometry['length'],
-        points: geometry['points']
-      }
     end
 
     # Format Departure QUERY.
     def format_departure_stop(departure)
       # Formattazione di base
       {
-        stop_id: departure['stop_id'],
-        stop_name: departure['from_stop'],
-        t_arrival: Helpers::TimeHelper.sec_til_mid(departure['scheduledArrival']),
-        trip: format_trip(departure['trip'])
+        departure_stop_name: departure['from_stop'],
+        departure_stop_lat: departure['from_lat'],
+        departure_stop_lon: departure['from_lon'],
+        first_departure_time: Helpers::TimeHelper.sec_til_mid(departure['scheduledArrival']),
+        headsign: departure['headsign'],
+        line: departure['trip']['routeShortName'],
+        times: format_stop_times(departure['trip']['stoptimes']),
+        geometries: departure['trip']['tripGeometry']['points']
       }
-    end
-
-    def format_trip_stoptimes(stoptimes)
-      stoptimes.map do |stoptime|
-        {
-          t_arrival: Helpers::TimeHelper.sec_til_mid(stoptime['scheduledArrival']),
-          stop: format_only_stop_name(stoptime['stop'])
-        }
-      end
     end
 
     def format_stop(stop)
@@ -91,43 +60,16 @@ module Serializers
       }
     end
 
-    def format_only_stop_name(stop)
-      # Formattazione di base
-      {
-        id: stop['gtfsId'],
-        name: stop['name']
-      }
-    end
-
-    def format_trip(trip)
-      {
-        id: trip['gtfsId'],
-        headsign: trip['tripHeadsign'],
-        route: format_route(trip['route']),
-        arrival_stop_time: format_arrival_stop_time(trip['arrivalStoptime'])
-      }
-    end
-
-    def format_route(route)
-      {
-        id: route['id'],
-        short_name: route['shortName'],
-        long_name: route['longName'],
-        mode: route['mode']
-      }
-    end
-
-    def format_arrival_stop_time(arrival_stoptime)
-      {
-        scheduled_arrival: Helpers::TimeHelper.sec_til_mid(arrival_stoptime['scheduledArrival']),
-        stop: format_single_stop(arrival_stoptime['stop'])
-      }
-    end
-
-    def format_single_stop(stop)
-      {
-        name: stop['name']
-      }
+    def format_stop_times(stop_times)
+      stop_times.map do |stime|
+        {
+          t_departure: Helpers::TimeHelper.sec_til_mid(stime['scheduledDeparture']),
+          stop_name: stime['stop']['name'],
+          stop_lat: stime['stop']['lat'],
+          stop_lon: stime['stop']['lon'],
+          mode: stime['stop']['vehicleMode']
+        }
+      end
     end
 
     # Metodo helper per formattare un array di fermate.

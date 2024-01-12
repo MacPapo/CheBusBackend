@@ -31,6 +31,7 @@ query(
         itineraries {
             startTime
             endTime
+            duration
             legs {
                 mode
                 startTime
@@ -49,10 +50,17 @@ query(
                     departureTime
                     arrivalTime
                 }
+                agency {
+                    id
+                    gtfsId
+                }
                 route {
                     gtfsId
                     longName
                     shortName
+                }
+                trip {
+                    id
                 }
                 legGeometry {
                     points

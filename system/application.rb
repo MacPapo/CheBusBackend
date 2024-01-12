@@ -15,7 +15,7 @@ class Application < Dry::System::Container
 
   # Initializes Zeitwerk for autoloading with debug mode enabled.
   # Zeitwerk is an efficient and configurable code loader for Ruby.
-  use :zeitwerk, debug: true
+  use :zeitwerk, debug: false
 
   # Configures the component directories for the application.
   # Components in 'app' and 'lib' directories are added to the container

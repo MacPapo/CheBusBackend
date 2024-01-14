@@ -4,6 +4,7 @@
 module Routes::API::V2::Routes
   # Constants defining the required parameters for the route endpoint.
   ROUTE_PARAMS = %w[from_stop_name to_stop_name datetime interval is_arrival_time].freeze
+  NUM_ITINERARIES = 100
   TRANSFER_PENALTY = 30
   WALK_RELUCTANCE = 60
   WAIT_RELUCTANCE = 1
@@ -64,6 +65,7 @@ module Routes::API::V2::Routes
         time:,
         search_window: interval_sec,
         is_arrival_time:,
+        num_itineraries: NUM_ITINERARIES,
         transfer_penalty: TRANSFER_PENALTY,
         walk_reluctance: WALK_RELUCTANCE,
         wait_reluctance: WAIT_RELUCTANCE,

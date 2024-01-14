@@ -73,7 +73,12 @@ module Routes::API::V2::Routes
       }
     )['data']['plan']
 
-    APIResponse.success(response, Serializers::PlanSerializer.new(trim_walk_paths(result['itineraries'])).to_json)
+    res_no_extra_walks = trim_walk_paths(result['itineraries'])
+    if res_no_extra_walks.size == 1 && res_no_extra_walks[0]['legs'].empty?
+      APIResponse.success(response, [])
+    else
+      APIResponse.success(response, Serializers::PlanSerializer.new(res_no_extra_walks).to_json)
+    end
   end
 
   def self.invalid_location?(lat, lon)

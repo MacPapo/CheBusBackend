@@ -80,11 +80,15 @@ module Routes::API::V2::Stops
         return APIResponse.error(resp.response, 'The stop name provided is incorrect!', 400) if s_id.nil?
 
         a_id = handle_agency_query(stopname)
+        return APIResponse.error(resp.response, 'No Routes from here', 400) if a_id.nil?
+
         s_id = "#{a_id}:#{s_id}"
       else
         s_id = Models::Stop.search_stops_id_by_cid(c_id)
 
         a_id = handle_agency_query(stopname)
+        return APIResponse.error(resp.response, 'No Routes from here', 400) if a_id.nil?
+
         s_id.map! { |x| "#{a_id}:#{x}" }
       end
 
@@ -113,12 +117,15 @@ module Routes::API::V2::Stops
   end
 
   def self.handle_agency_query(name)
-    Application['graphql'].query(
+    res = Application['graphql'].query(
       Graphql::StopsQueries::AGENCY_ID_BY_STOP,
       variables: {
         stop_name: name
       }
-    )['data']['stops'][0]['routes'][0]['agency']['gtfsId'].split(':').first
+    )['data']['stops'][0]['routes']
+    return nil if res.nil? || res.empty?
+
+    res[0]['agency']['gtfsId'].split(':').first
   end
 
   def self.purify_output(out)
